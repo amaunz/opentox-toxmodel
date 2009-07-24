@@ -1,0 +1,16 @@
+%h1
+  %code lazar
+  prediction models
+
+%a{ :href => '/create' } Create a model
+
+%ul
+  - @models.each do |model|
+    %li
+      %a{:href => "/#{model['id']}"}
+        = model['name'].capitalize.gsub(/_/,' ')
+      from 
+      = model['user']
+      (
+      %a{:href => "/validation/#{model['id']}"} Validation 
+      ) 

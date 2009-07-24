@@ -1,0 +1,22 @@
+%p
+  You are going to remove the
+  = @model['name']
+  model permanently!
+%p Enter your username/password if you are sure or cancel the operation.
+
+%form{ :action => "/#{params[:id]}", :method => "delete" }
+  %table
+    %tr
+      %th Username:
+      %td
+        %input{:type => "text", :name => "username"}
+    %tr
+      %th Password:
+      %td
+        %input{:type => "text", :name => "password"}
+
+    %tr
+      %td
+        %input{:type => "submit", :value => "Delete"}
+      %td
+        %a{:href => '/'} Cancel

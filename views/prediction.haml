@@ -1,0 +1,29 @@
+&rarr;
+%a{ :href => "/#{params[:id]}" } Enter structure
+&rarr; Prediction
+
+%h1
+  = @lazar['endpoint'].gsub(/\"|\'/,'').capitalize.gsub(/_/,' ')
+  of
+  = params[:name]
+
+.prediction
+  %table
+    %tr
+      %th Structure
+      %th
+        %p Prediction
+        %p (Confidence)
+      %th Measured activity
+    %tr
+      %td
+        %img{:src => "http://cactus.nci.nih.gov/chemical/structure/#{URI.encode(@lazar['smiles'])}/image", :alt => "#{@lazar['smiles']}"}
+      %td
+        %br= @lazar['prediction']
+        %br
+          (
+          = @lazar['confidence']
+          )
+      %td= @lazar['database_activity']
+
+%a{:href => "/neighbors", :lazar => @lazar } Show neighbors

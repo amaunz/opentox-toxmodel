@@ -1,0 +1,20 @@
+!!!
+%html{:xmlns => "http://www.w3.org/1999/xhtml", "xml:lang" => "en", :lang => "en"}
+
+  %head
+    %meta{'http-equiv' => 'Content-Type', :content => 'text/html'}
+    %title Lazar
+    %link{:rel=>'stylesheet', :href=>'/stylesheets/style.css', :type => "text/css"}       
+
+  %body
+
+    %a{ :href => "/" } Home
+
+    = yield
+
+    %hr
+    &copy;
+    %a{:href => 'http://www.in-silico.ch'} in silico toxicology
+    2009, powered by
+    %a{:href => 'http://www.opentox.org'} OpenTox
+

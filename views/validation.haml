@@ -1,0 +1,264 @@
+= "-> "
+%a{ :href => "/validation/#{params[:id]}" } Validation
+
+%h1
+  = @model['name'].capitalize.gsub(/_/,' ')
+  validation
+
+Created on 
+= @model['created_at']
+by
+= @model['user']
+(
+%a{ :href => @model['validation']['details_uri'] } Prediction details
+)
+
+%h3 Predictions weighted by confidence index
+%p
+  %em Best indication of the overall performance
+
+%table
+  %tr
+    %th
+      True positive predictions
+    %td
+      tp
+    %td
+      = sprintf("%0.2f",@summary[:weighted][:tp].to_f)
+  %tr
+    %th
+      True negative predictions
+    %td
+      tn
+    %td
+      = sprintf("%0.2f",@summary[:weighted][:tn].to_f)
+  %tr
+    %th
+      False positive predictions
+    %td
+      fp
+    %td
+      = sprintf("%0.2f",@summary[:weighted][:fp].to_f)
+  %tr
+    %th
+      False negative predictions
+    %td
+      fn
+    %td
+      = sprintf("%0.2f",@summary[:weighted][:fn].to_f)
+  %tr
+    %th
+      Sensitivity (true positive rate)
+    %td
+      tp/(tp+fn)
+    %td
+      = (100*@summary[:weighted][:tp].to_f/(@summary[:weighted][:tp].to_f+@summary[:weighted][:fn].to_f)).round/100.00
+  %tr
+    %th
+      Specificity (true negative rate)
+    %td
+      tn/(tn+fp)
+    %td
+      = (100*@summary[:weighted][:tn].to_f/(@summary[:weighted][:tn].to_f+@summary[:weighted][:fp].to_f).to_f).round/100.00
+  %tr
+    %th
+      Positive predictivity
+    %td
+      tp/(tp+fp)
+    %td
+      = (100*@summary[:weighted][:tp].to_f/(@summary[:weighted][:tp].to_f+@summary[:weighted][:fp].to_f).to_f).round/100.00
+  %tr
+    %th
+      Negative predictivity
+    %td
+      tn/(tn+fn)
+    %td
+      = (100*@summary[:weighted][:tn].to_f/(@summary[:weighted][:tn].to_f+@summary[:weighted][:fn].to_f).to_f).round/100.00
+  %tr
+    %th
+      False positive rate
+    %td
+      fp/(tp+fn)
+    %td
+      = (100*@summary[:weighted][:fp].to_f/(@summary[:weighted][:tp].to_f+@summary[:weighted][:fn].to_f).to_f).round/100.00
+  %tr
+    %th
+      False negative rate
+    %td
+      fn/(tn+fp)
+    %td
+      = (100*@summary[:weighted][:fn].to_f/(@summary[:weighted][:tn].to_f+@summary[:weighted][:fp].to_f).to_f).round/100.00
+  %tr
+    %th
+      Accuracy (concordance)
+    %td
+      (tp+tn)/(tp+fp+tn+fn)
+    %th
+      = (100*(@summary[:weighted][:tp].to_f+@summary[:weighted][:tn].to_f)/(@summary[:weighted][:tp].to_f+@summary[:weighted][:tn].to_f+@summary[:weighted][:fn].to_f+@summary[:weighted][:fp].to_f).to_f).round/100.00
+
+
+%h3 Predictions within the applicability domain
+%p
+  %em Hard cutoff at confidence > 0.025
+
+%table
+  %tr
+    %th
+      True positive predictions
+    %td
+      tp
+    %td
+      = @summary[:within_ad][:tp].to_i
+  %tr
+    %th
+      True negative predictions
+    %td
+      tn
+    %td
+      = @summary[:within_ad][:tn].to_i
+  %tr
+    %th
+      False positive predictions
+    %td
+      fp
+    %td
+      = @summary[:within_ad][:fp].to_i
+  %tr
+    %th
+      False negative predictions
+    %td
+      fn
+    %td
+      = @summary[:within_ad][:fn].to_i
+  %tr
+    %th
+      Sensitivity (true positive rate)
+    %td
+      tp/(tp+fn)
+    %td
+      = (100*@summary[:within_ad][:tp].to_i/(@summary[:within_ad][:tp].to_i+@summary[:within_ad][:fn].to_i).to_f).round/100.00
+  %tr
+    %th
+      Specificity (true negative rate)
+    %td
+      tn/(tn+fp)
+    %td
+      = (100*@summary[:within_ad][:tn].to_i/(@summary[:within_ad][:tn].to_i+@summary[:within_ad][:fp].to_i).to_f).round/100.00
+  %tr
+    %th
+      Positive predictivity
+    %td
+      tp/(tp+fp)
+    %td
+      = (100*@summary[:within_ad][:tp].to_i/(@summary[:within_ad][:tp].to_i+@summary[:within_ad][:fp].to_i).to_f).round/100.00
+  %tr
+    %th
+      Negative predictivity
+    %td
+      tn/(tn+fn)
+    %td
+      = (100*@summary[:within_ad][:tn].to_i/(@summary[:within_ad][:tn].to_i+@summary[:within_ad][:fn].to_i).to_f).round/100.00
+  %tr
+    %th
+      False positive rate
+    %td
+      fp/(tp+fn)
+    %td
+      = (100*@summary[:within_ad][:fp].to_i/(@summary[:within_ad][:tp].to_i+@summary[:within_ad][:fn].to_i).to_f).round/100.00
+  %tr
+    %th
+      False negative rate
+    %td
+      fn/(tn+fp)
+    %td
+      = (100*@summary[:within_ad][:fn].to_i/(@summary[:within_ad][:tn].to_i+@summary[:within_ad][:fp].to_i).to_f).round/100.00
+  %tr
+    %th
+      Accuracy (concordance)
+    %td
+      (tp+tn)/(tp+fp+tn+fn)
+    %th
+      = (100*(@summary[:within_ad][:tp].to_i+@summary[:within_ad][:tn].to_i)/(@summary[:within_ad][:tp].to_i+@summary[:within_ad][:tn].to_i+@summary[:within_ad][:fn].to_i+@summary[:within_ad][:fp].to_i).to_f).round/100.00
+
+%h3 All predictions
+%p
+  %em Poor indication of the overall performance. Depends predominatly on the fraction of compounds within the applicability domain.
+
+%table
+  %tr
+    %th
+      True positive predictions
+    %td
+      tp
+    %td
+      = @summary[:all][:tp].to_i
+  %tr
+    %th
+      True negative predictions
+    %td
+      tn
+    %td
+      = @summary[:all][:tn].to_i
+  %tr
+    %th
+      False positive predictions
+    %td
+      fp
+    %td
+      = @summary[:all][:fp].to_i
+  %tr
+    %th
+      False negative predictions
+    %td
+      fn
+    %td
+      = @summary[:all][:fn].to_i
+  %tr
+    %th
+      Sensitivity (true positive rate)
+    %td
+      tp/(tp+fn)
+    %td
+      = (100*@summary[:all][:tp].to_i/(@summary[:all][:tp].to_i+@summary[:all][:fn].to_i).to_f).round/100.00
+  %tr
+    %th
+      Specificity (true negative rate)
+    %td
+      tn/(tn+fp)
+    %td
+      = (100*@summary[:all][:tn].to_i/(@summary[:all][:tn].to_i+@summary[:all][:fp].to_i).to_f).round/100.00
+  %tr
+    %th
+      Positive predictivity
+    %td
+      tp/(tp+fp)
+    %td
+      = (100*@summary[:all][:tp].to_i/(@summary[:all][:tp].to_i+@summary[:all][:fp].to_i).to_f).round/100.00
+  %tr
+    %th
+      Negative predictivity
+    %td
+      tn/(tn+fn)
+    %td
+      = (100*@summary[:all][:tn].to_i/(@summary[:all][:tn].to_i+@summary[:all][:fn].to_i).to_f).round/100.00
+  %tr
+    %th
+      False positive rate
+    %td
+      fp/(tp+fn)
+    %td
+      = (100*@summary[:all][:fp].to_i/(@summary[:all][:tp].to_i+@summary[:all][:fn].to_i).to_f).round/100.00
+  %tr
+    %th
+      False negative rate
+    %td
+      fn/(tn+fp)
+    %td
+      = (100*@summary[:all][:fn].to_i/(@summary[:all][:tn].to_i+@summary[:all][:fp].to_i).to_f).round/100.00
+  %tr
+    %th
+      Accuracy (concordance)
+    %td
+      (tp+tn)/(tp+fp+tn+fn)
+    %th
+      = (100*(@summary[:all][:tp].to_i+@summary[:all][:tn].to_i)/(@summary[:all][:tp].to_i+@summary[:all][:tn].to_i+@summary[:all][:fn].to_i+@summary[:all][:fp].to_i).to_f).round/100.00
