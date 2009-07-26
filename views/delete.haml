@@ -4,7 +4,9 @@
   model permanently!
 %p Enter your username/password if you are sure or cancel the operation.
 
-%form{ :action => "/#{params[:id]}", :method => "delete" }
+%form{ :action => "/#{params[:id]}", :method => "post" }
+  %input{:type => 'hidden', :name => "_method", :value => "delete"}
+
   %table
     %tr
       %th Username:

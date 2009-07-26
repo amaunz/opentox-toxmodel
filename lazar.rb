@@ -6,7 +6,7 @@ LAZAR_URI = 'http://webservices.in-silico.ch/lazar/models/'
 #LAZAR_URI = 'http://localhost:3000/models/'
 COMPOUNDS_URI = 'http://webservices.in-silico.ch/compounds/'
 
-get '/' do 
+get '/?' do 
 	@models = []
 	(RestClient.get LAZAR_URI).chomp.each_line do |uri|
 		puts uri
@@ -62,9 +62,10 @@ end
 post '/' do # create a new model
 	# create dataset
 	# validate lazar on the dataset
-	sanitized_name = params[:name].gsub(/\s+/,'_').gsub(/[^[:alnum:]]/, '')
+	sanitized_name = params[:name].gsub(/\s+/,'_').gsub(/\W/, '')
 	uri = `curl -F name=#{sanitized_name} -F file=@#{params[:file][:tempfile].path} -F username=#{params[:username]} -F password=#{params[:password]} #{LAZAR_URI}`
 	id = uri.chomp.gsub(/^.*\/(\d+)$/,'\1')
+	# TODO check for not authorized
 	redirect "/#{id}"
 end
 
@@ -86,7 +87,7 @@ end
 
 delete '/:id' do
 	begin
-		RestClient.delete "#{LAZAR_URI}#{params[:id]}", :username => params[:username], :password => params[:password]
+		`curl  -X DELETE -d username=#{params[:username]} -d password=#{params[:password]} #{LAZAR_URI}#{params[:id]}`
 		redirect '/'
 	rescue
 		"Deletion of model with ID #{params[:id]} failed. Please check your username and password."
