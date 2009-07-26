@@ -21,12 +21,6 @@ get '/create' do
 	haml :create
 end
 
-get '/neighbors' do
-	#@lazar  = params[:lazar]
-	#haml :neighbors
-	"Sorry, display of neighbors is not (yet) implemented."
-end
-
 get '/:id' do # input form for predictions
 	begin
 		xml = RestClient.get "#{LAZAR_URI}#{params[:id]}"
