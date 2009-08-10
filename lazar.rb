@@ -5,6 +5,7 @@ end
 LAZAR_URI = 'http://webservices.in-silico.ch/lazar/models/'
 #LAZAR_URI = 'http://localhost:3000/models/'
 COMPOUNDS_URI = 'http://webservices.in-silico.ch/compounds/'
+#COMPOUNDS_URI = 'http://localhost:9393'
 
 get '/?' do 
 	@models = []

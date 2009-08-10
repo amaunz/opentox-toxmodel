@@ -20,7 +20,7 @@ Installation instructions for Debian/Ubuntu:
 
 1. Install Debian/Ubuntu packages:
 
-	apt-get install git ruby-full build-essential wget
+	sudo apt-get install git-core ruby-full build-essential wget
 
 2. Install rubygems from source (http://rubyforge.org/projects/rubygems/):
 
@@ -28,16 +28,18 @@ Installation instructions for Debian/Ubuntu:
 	tar xzf rubygems-1.3.5.tgz
 	cd rubygems-1.3.5
 	sudo ruby setup.rb
-	
+	sudo ln -s /usr/bin/gem1.8 /usr/bin/gem
+
 3. Install gems:
 
-	sudo gem install sinatra rest_client sinatra/url_for haml sass crack shotgun
+	sudo gem sources -a http://gems.github.com
+	sudo gem install sinatra rest-client emk-sinatra-url-for haml crack shotgun
 
 4. Install opentox-app-lazar
 
 	git clone git://github.com/helma/opentox-app-lazar.git
 
-	or fork opentox-app-lazar on github (http://github.com/helma/opentox-app-lazar) and clone your new repository (see guides on http://gihub.com)
+	or fork opentox-app-lazar on github (http://github.com/helma/opentox-app-lazar) and clone your new repository (see guides on http://github.com)
 
 5. Run opentox-app-lazar
 
