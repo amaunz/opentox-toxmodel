@@ -1,3 +1,4 @@
+%hr
 %p
   %em This is an experimental version, please visit the production server at
   %a{:href => "http://lazar.in-silico.de"} http://lazar.in-silico.de
@@ -6,15 +7,9 @@
   %code lazar
   prediction models
 
-%a{ :href => '/create' } Create a model
-
 %ul
   - @models.each do |model|
     %li
-      %a{:href => "/#{model['id']}"}
-        = model['name'].capitalize.gsub(/_/,' ')
-      from 
-      = model['user']
-      (
-      %a{:href => "/validation/#{model['id']}"} Validation 
-      ) 
+      %a{:href => "/#{File.basename(model)}"} #{OpenTox::Model::Lazar.find(model).endpoint.sub(/^.*[#|\/](.*)$/,'\1')}
+
+%a{ :href => '/create' } Create a new model

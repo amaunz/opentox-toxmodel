@@ -1,10 +1,6 @@
 &rarr; Enter structure
 
-%h1
-  = @model['name'].capitalize.gsub(/_/,' ')
-  prediction
-
-%a{ :href => "/validation/#{params[:id]}" } Validation results
+%h1= @model.endpoint.sub(/^.*[#|\/](.*)$/,'\1')#.capitalize.gsub(/_/,' ')
 
 %a{:href => "/delete/#{params[:id]}"} Delete model
 

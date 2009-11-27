@@ -1,32 +1,22 @@
 &rarr; Create
+%hr
 
 %h1
-  Create and validate a
+  Create a
   %code lazar
   model
 
 %form{ :action => '/', :method => "post", :enctype => "multipart/form-data" }
   %table
     %tr
-      %th Username:
-      %td
-        %input{:type => "text", :name => "username"}
-    %tr
-      %th Password:
-      %td
-        %input{:type => "text", :name => "password"}
-    %tr
-      %th Endpoint:
-      %td
-        %input{:type => "text", :name => "name"}
-    %tr
-      %th Training data:
+      %th
+        Training data 
+        %a{:href => 'http://www.w3.org/TR/rdf-syntax-grammar/'} (RDF/XML)
       %td
         %input{:type => 'file', :name => 'file'}
     %tr
       %td
         %input{ :type => "submit", :value => "Submit"}
-      %td
         %a{:href => '/'} Cancel
 
 
