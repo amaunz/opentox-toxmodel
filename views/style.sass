@@ -1,18 +1,81 @@
-form
-  th
-    :text-align right
+!bg_color = #FFFFF3
+!fg_color = #36648B
+!body_color = #ECF1EF
+!text_color = black
 
-.prediction
-  :text-align center
-  table
-    :border-spacing 0
-    :border-collapse collapse
-    :margin 0
-    :border 1px solid
+body
+  background-color = !body_color
+  color = !text_color
+  height: 100%
+  padding: 1em
+  
+  .index
 
-    th
-      :border 1px solid
-      :margin 2%
-    td
-      :border 1px solid
-      :margin 2%
+    ul
+      margin: 0
+      padding: 0
+      white-space: nowrap
+      list-style-type: none
+   
+    li
+      margin: 0
+      padding: 0
+      display: inline
+      border-right: 1px solid
+        color = !bg_color
+      border-top: 1px solid
+        color = !bg_color
+      background-color = !fg_color
+      padding-left: 0.5em
+      padding-right: 0.5em
+
+      a
+        text-decoration: none
+        color = !bg_color
+        &:hover
+          color = !bg_color
+    
+    li.selected
+      font-weight: bolder
+      background-color= !bg_color
+      border: 1px solid
+        color = !fg_color
+      border-bottom: 1px solid
+        color = !bg_color
+      a
+        color = !fg_color
+
+
+  .content
+    background-color = !bg_color
+    height: 100%
+    padding: 0.5em
+    border: 1px solid
+      color = !fg_color
+
+    .notice
+      background-color = !body_color
+      margin: 2%
+      padding: 1%
+      border: 1px solid red
+
+    .upload
+      text-align: left
+
+    .predictions
+      :text-align center
+      table
+        background-color: white
+        :border-spacing 0
+        :border-collapse collapse
+        :margin 0
+        :border 1px solid
+
+        th
+          :border 0
+          :margin 2%
+        td
+          :border 1px solid
+          :padding 2%
+      
+  .footer

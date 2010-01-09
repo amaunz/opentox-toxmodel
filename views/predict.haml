@@ -1,0 +1,20 @@
+%form{ :action => '/predict', :method => "post", :enctype => "multipart/form-data" }
+  %ol
+    %li
+      Enter a compound identifier (Name, InChI, Smiles, CAS, ...):
+      %p
+        %input{:type => 'text', :name => 'identifier'}
+    %li
+      Choose one or more prediction models:
+      %ul
+      - @models.each do |model|
+        %br
+          -# %input{:type => 'checkbox', :name => 'model_uri', :value => model}
+          %input{:type => 'checkbox', :name => "selection[#{model}]", :value => true}
+          = model
+
+    %li
+      %p
+        %input{ :type => "submit", :value => "Predict"}
+        %a{:href => '/'} Cancel
+

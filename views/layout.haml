@@ -3,18 +3,32 @@
 
   %head
     %meta{'http-equiv' => 'Content-Type', :content => 'text/html'}
-    %title Lazar
+    %title ToxModel
     %link{:rel=>'stylesheet', :href=>'/stylesheets/style.css', :type => "text/css"}       
 
   %body
+    %h1 ToxModel
 
-    %a{ :href => "/" } Home
+    .index
+      %ul
+        %li{:class => ("selected" if /create/ =~ request.path )}
+          %a{ :href => "/create" } Create a prediction model
+        %li{:class => ("selected" if /predict/ =~ request.path )}
+          %a{ :href => "/predict" } Toxicity predictions
+        %li{:class => ("selected" if /about/ =~ request.path )}
+          %a{ :href => "/about" } About
 
-    = yield
+    .content
 
-    %hr
-    &copy;
-    %a{:href => 'http://www.in-silico.ch'} in silico toxicology
-    2009, powered by
-    %a{:href => 'http://www.opentox.org'} OpenTox
+      - if flash[:notice]
+        .notice
+          = flash[:notice]
+
+      = yield
+
+    .footer
+      &copy;
+      %a{:href => 'http://www.in-silico.ch'} in silico toxicology
+      2009, powered by
+      %a{:href => 'http://www.opentox.org'} OpenTox
 

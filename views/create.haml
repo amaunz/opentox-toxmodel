@@ -1,22 +1,11 @@
-&rarr; Create
-%hr
-
-%h1
-  Create a
-  %code lazar
-  model
-
-%form{ :action => '/', :method => "post", :enctype => "multipart/form-data" }
-  %table
-    %tr
-      %th
-        Training data 
-        %a{:href => 'http://www.w3.org/TR/rdf-syntax-grammar/'} (RDF/XML)
-      %td
+.upload
+  %form{ :action => '/', :method => "post", :enctype => "multipart/form-data" }
+    %ol
+      %li Upload training data (OWL-DL)
+      %p
         %input{:type => 'file', :name => 'file'}
-    %tr
-      %td
+
+      %li
         %input{ :type => "submit", :value => "Submit"}
         %a{:href => '/'} Cancel
-
 
