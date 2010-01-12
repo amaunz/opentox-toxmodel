@@ -8,10 +8,13 @@
       Choose one or more prediction models:
       %ul
       - @models.each do |model|
+        - yaml = RestClient.get model, :accept => 'application/x-yaml'
+        - yaml = YAML.load yaml
         %br
           -# %input{:type => 'checkbox', :name => 'model_uri', :value => model}
+          -# %input{:type => 'checkbox', :name => "selection[#{model}]", :value => true}
           %input{:type => 'checkbox', :name => "selection[#{model}]", :value => true}
-          = model
+          = yaml[:endpoint].split(/#/).last
 
     %li
       %p
