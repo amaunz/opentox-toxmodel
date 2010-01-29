@@ -1,0 +1,13 @@
+%a{:href => "create"}Select/create dataset
+&rarr; Select endpoint
+%p Dataset #{@dataset_uri} contains more than one endpoint.
+%p Please select an endpoint to predict:
+%form{ :action => 'create', :method => "post" }
+  %input{:type => :hidden, :name => :dataset_uri, :value => @dataset_uri}
+  %p
+    %select{:name => "feature_uri"}
+      - @features.each do |uri,title|
+        %option{:value => uri} #{title}
+  %input{ :type => "submit", :value => "Select"}
+  %a{:href => 'create'} Cancel
+

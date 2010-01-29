@@ -1,11 +1,28 @@
 .upload
-  %form{ :action => '/', :method => "post", :enctype => "multipart/form-data" }
-    %ol
-      %li Upload training data (OWL-DL)
+  -#
+    %p Select a dataset
+    %form{ :action => 'select', :method => "post" }
+      %input{:type => :hidden, :name => :dataset_uri, :value => @dataset_uri}
       %p
-        %input{:type => 'file', :name => 'file'}
+        %select{:name => "dataset_uri"}
+          - @datasets.each do |uri,title|
+            %option{:value => uri} #{title}
+      %input{ :type => "submit", :value => "Select"}
+      %a{:href => '/'} Cancel
 
+  %form{ :action => 'upload', :method => "post", :enctype => "multipart/form-data" }
+    %ol
+      %li 
+        %label{:for => 'endpoint'}Enter endpoint name:
+        %input{:type => 'text', :name => 'endpoint', :id => 'endpoint'}
       %li
-        %input{ :type => "submit", :value => "Submit"}
-        %a{:href => '/'} Cancel
+        %label{:for => 'file'}
+          Upload training data in CSV format:
+        %input{:type => 'file', :name => 'file', :id => 'file'}
+        (
+        %a{:href => 'csv_format'}formatting instructions 
+        )
+      %li
+        %input{ :type => "submit", :value => "Create model"}
+        %a{:href => 'create'} Cancel
 

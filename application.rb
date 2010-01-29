@@ -2,12 +2,14 @@
 	require lib
 end
 require 'rack-flash'
+require 'benchmark'
+require 'ambit'
 
 use Rack::Flash
 set :sessions, true
 
 get '/' do
-	redirect '/create'
+	redirect 'create'
 end
 
 get '/predict/?' do 
@@ -16,6 +18,7 @@ get '/predict/?' do
 end
 
 get '/create' do
+	@datasets = Ambit.datasets
 	haml :create
 end
 
@@ -23,7 +26,46 @@ get '/about' do
 	haml :about
 end
 
-post '/' do # create a new model
+get '/csv_format' do
+	haml :csv_format
+end
+
+post '/select' do # create a new model
+	@dataset_uri = params[:dataset_uri]
+	@features = Ambit.features params[:dataset_uri]
+	if @features.size == 1
+		OpenTox::Algorithm::Lazar.create_model(:dataset_uri => training_data.uri, :feature_uri => @features.first)
+		flash[:notice] = "Model creation started. If you reload this page the new model will appear in the selection list as soon as it is finished."
+		haml :predict
+	else
+		haml :features
+	end
+end
+
+post '/create' do
+	#OpenTox::Algorithm::Lazar.create_model(:dataset_uri => params[:dataset_uri], :feature_uri => params[:feature_uri])
+	#flash[:notice] = "Model creation started. If you reload this page the new model will appear in the selection list as soon as it is finished."
+=begin
+	flash[:notice] = "curl -X POST "
+	params.each do |k,v|
+		flash[:notice] += "-d \"" + k + "=" + v + "\" "
+	end
+	flash[:notice] += File.join @@config[:services]['opentox-algorithm'],"fminer"
+=end
+	flash[:notice] = "curl \"#{params[:dataset_uri]}?feature_uris\\[\\]=#{CGI.escape(params[:feature_uri])}\""
+	dataset_uri = "#{params[:dataset_uri]}?feature_uris\\[\\]=#{CGI.escape(params[:feature_uri])}"
+	OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :feature_uri => params[:feature_uri])
+	flash[:notice] = "Model creation started. If you reload this page the new model will appear in the selection list as soon as it is finished."
+	redirect "/tasks"
+	#haml :predict
+end
+
+get '/tasks' do
+	@tasks = OpenTox::Task.all
+	haml :tasks
+end
+
+post '/upload' do # create a new model
 	data = params[:file][:tempfile].read
 	training_data = OpenTox::Dataset.create(data)
 	@features = training_data.features
@@ -57,7 +99,6 @@ post '/predict/?' do # post chemical name to model
 		parser.parse_string_into_model(model,prediction,'/')
 		f = model.subject(RDF['type'],OT['Feature']) # this can be dangerous if OWL is not properly sorted
 		title = model.object(f,DC['title']).to_s
-		puts title
 		model.subjects(RDF['type'], OT['FeatureValue']).each do |v|
 			feature = model.object(v,OT['feature'])
 			feature_name = model.object(feature,DC['title']).to_s

@@ -4,7 +4,7 @@
   %head
     %meta{'http-equiv' => 'Content-Type', :content => 'text/html'}
     %title ToxModel
-    %link{:rel=>'stylesheet', :href=>'/stylesheets/style.css', :type => "text/css"}       
+    %link{:rel=>'stylesheet', :href=>'stylesheets/style.css', :type => "text/css"}       
 
   %body
     %h1 ToxModel
@@ -12,11 +12,11 @@
     .index
       %ul
         %li{:class => ("selected" if /create/ =~ request.path )}
-          %a{ :href => "/create" } Create a prediction model
+          %a{ :href => "create" } Create a prediction model
         %li{:class => ("selected" if /predict/ =~ request.path )}
-          %a{ :href => "/predict" } Toxicity predictions
+          %a{ :href => "predict" } Toxicity predictions
         %li{:class => ("selected" if /about/ =~ request.path )}
-          %a{ :href => "/about" } About
+          %a{ :href => "about" } About
 
     .content
 
