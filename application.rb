@@ -2,23 +2,23 @@
 	require lib
 end
 require 'rack-flash'
-require 'benchmark'
-require 'ambit'
+#require 'benchmark'
+gem 'sinatra-static-assets'
+require 'sinatra/static_assets'
 
 use Rack::Flash
 set :sessions, true
 
-get '/' do
-	redirect 'create'
+get '/?' do
+	redirect url_for('/create')
 end
 
 get '/predict/?' do 
-	@models = OpenTox::Model::Lazar.find_all#.each { |uri| @models << OpenTox::Model::Generic.new(uri) }
+	@models = OpenTox::Model::Lazar.find_all
 	haml :predict
 end
 
 get '/create' do
-	@datasets = Ambit.datasets
 	haml :create
 end
 
@@ -30,54 +30,41 @@ get '/csv_format' do
 	haml :csv_format
 end
 
-post '/select' do # create a new model
-	@dataset_uri = params[:dataset_uri]
-	@features = Ambit.features params[:dataset_uri]
-	if @features.size == 1
-		OpenTox::Algorithm::Lazar.create_model(:dataset_uri => training_data.uri, :feature_uri => @features.first)
-		flash[:notice] = "Model creation started. If you reload this page the new model will appear in the selection list as soon as it is finished."
-		haml :predict
-	else
-		haml :features
-	end
-end
-
-post '/create' do
-	#OpenTox::Algorithm::Lazar.create_model(:dataset_uri => params[:dataset_uri], :feature_uri => params[:feature_uri])
-	#flash[:notice] = "Model creation started. If you reload this page the new model will appear in the selection list as soon as it is finished."
-=begin
-	flash[:notice] = "curl -X POST "
-	params.each do |k,v|
-		flash[:notice] += "-d \"" + k + "=" + v + "\" "
-	end
-	flash[:notice] += File.join @@config[:services]['opentox-algorithm'],"fminer"
-=end
-	flash[:notice] = "curl \"#{params[:dataset_uri]}?feature_uris\\[\\]=#{CGI.escape(params[:feature_uri])}\""
-	dataset_uri = "#{params[:dataset_uri]}?feature_uris\\[\\]=#{CGI.escape(params[:feature_uri])}"
-	OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :feature_uri => params[:feature_uri])
-	flash[:notice] = "Model creation started. If you reload this page the new model will appear in the selection list as soon as it is finished."
-	redirect "/tasks"
-	#haml :predict
-end
-
 get '/tasks' do
 	@tasks = OpenTox::Task.all
 	haml :tasks
 end
 
+get '/task' do
+	@task = OpenTox::Task.find(session[:task_uri])
+	haml :task
+end
+
 post '/upload' do # create a new model
-	data = params[:file][:tempfile].read
-	training_data = OpenTox::Dataset.create(data)
-	@features = training_data.features
-	if @features.size == 1
-		OpenTox::Algorithm::Lazar.create_model(:dataset_uri => training_data.uri, :feature_uri => @features.first)
-		flash[:notice] = "Model creation started. If you reload this page the new model will appear in the selection list as soon as it is finished."
-		redirect '/predict'
-		haml :index
-	else
-		halt 400, "The dataset contains more than one target variable:\n#{@features.collect{|f| f.to_s}.join("\n")}\nPlease clean up and submit again."
-		redirect "/features"
+	dataset = OpenTox::Dataset.new
+	title = params[:endpoint].sub(/\s+/,'_')
+	dataset.title = title
+	feature_uri = url_for("/feature#"+title, :full)
+	feature = dataset.find_or_create_feature(feature_uri)
+	params[:file][:tempfile].each_line do |line|
+		items = line.chomp.split(/\s*,\s*/)
+		smiles = items[0]
+		compound_uri = OpenTox::Compound.new(:smiles => smiles).uri
+		compound = dataset.find_or_create_compound(compound_uri)
+		case items[1].to_s
+		when '1'
+			dataset.add(compound,feature,true)
+		when '0'
+			dataset.add(compound,feature,false)
+		else
+			flash[:notice] = "Irregular activity '#{items[1]}' for SMILES #{smiles}. Please use 1 for active and 0 for inactive compounds"
+		end
 	end
+	dataset_uri = dataset.save
+	task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :feature_uri => feature_uri)
+	flash[:notice] = "Model creation started - this may take some time. You can view and manage the status of current tasks at the #{link_to("Tasks page", "/tasks")}. #{link_to("Reload this page", "/predict")} to use the new model."
+	session[:task_uri] = task_uri
+	redirect url_for('/predict')
 end
 
 post '/predict/?' do # post chemical name to model
@@ -118,6 +105,12 @@ post '/predict/?' do # post chemical name to model
 
 	haml :prediction
 	#@predictions.to_yaml 
+end
+
+post '/task/cancel' do
+	task = OpenTox::Task.find(params[:task_uri])
+	task.cancel
+	redirect url_for('/tasks')
 end
 
 delete '/:id' do

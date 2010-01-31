@@ -1,16 +1,5 @@
 .upload
-  -#
-    %p Select a dataset
-    %form{ :action => 'select', :method => "post" }
-      %input{:type => :hidden, :name => :dataset_uri, :value => @dataset_uri}
-      %p
-        %select{:name => "dataset_uri"}
-          - @datasets.each do |uri,title|
-            %option{:value => uri} #{title}
-      %input{ :type => "submit", :value => "Select"}
-      %a{:href => '/'} Cancel
-
-  %form{ :action => 'upload', :method => "post", :enctype => "multipart/form-data" }
+  %form{ :action => url_for('/upload'), :method => "post", :enctype => "multipart/form-data" }
     %ol
       %li 
         %label{:for => 'endpoint'}Enter endpoint name:
@@ -20,9 +9,9 @@
           Upload training data in CSV format:
         %input{:type => 'file', :name => 'file', :id => 'file'}
         (
-        %a{:href => 'csv_format'}formatting instructions 
+        = link_to "formatting instructions ", 'csv_format'
         )
       %li
         %input{ :type => "submit", :value => "Create model"}
-        %a{:href => 'create'} Cancel
+        = link_to "Cancel", 'create'
 

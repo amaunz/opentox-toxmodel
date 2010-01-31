@@ -1,24 +1,25 @@
-- unless @models.nil?
-  %form{ :action => '/predict', :method => "post", :enctype => "multipart/form-data" }
-    %ol
-      %li
-        Enter a compound identifier (Name, InChI, Smiles, CAS, ...):
-        %p
-          %input{:type => 'text', :name => 'identifier'}
-      %li
-        Choose one or more prediction models:
-        %ul
-        - @models.each do |model|
-          - yaml = RestClient.get model, :accept => 'application/x-yaml'
-          - yaml = YAML.load yaml
-          %br
-            -# %input{:type => 'checkbox', :name => 'model_uri', :value => model}
-            -# %input{:type => 'checkbox', :name => "selection[#{model}]", :value => true}
-            %input{:type => 'checkbox', :name => "selection[#{model}]", :value => true}
-            = yaml[:endpoint].split(/#/).last
+.upload
+  - unless @models.nil?
+    %form{ :action => url_for('/predict'), :method => "post", :enctype => "multipart/form-data" }
+      %ol
+        %li
+          %label{:for => 'identifier'}Enter a compound identifier:
+          %input{:type => 'text', :name => 'identifier', :id => 'identifier'}
+          (Name, InChI, Smiles, CAS, ...)
+        %li
+          %label{:for => 'model'}Choose one or more prediction models:
+          %ul
+          - @models.each do |model|
+            - yaml = RestClient.get model, :accept => 'application/x-yaml'
+            - yaml = YAML.load yaml
+            %br
+              -# %input{:type => 'checkbox', :name => 'model_uri', :value => model}
+              -# %input{:type => 'checkbox', :name => "selection[#{model}]", :value => true}
+              %input{:type => 'checkbox', :name => "selection[#{model}]", :value => true, :id => 'model'}
+              = yaml[:endpoint].split(/#/).last
 
-      %li
-        %p
-          %input{ :type => "submit", :value => "Predict"}
-          %a{:href => '/'} Cancel
+        %li
+          %p
+            %input{ :type => "submit", :value => "Predict"}
+            = link_to 'Cancel', '/' 
 

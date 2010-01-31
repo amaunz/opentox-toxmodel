@@ -12,11 +12,13 @@
     .index
       %ul
         %li{:class => ("selected" if /create/ =~ request.path )}
-          %a{ :href => "create" } Create a prediction model
+          = link_to "Create", "/create"
         %li{:class => ("selected" if /predict/ =~ request.path )}
-          %a{ :href => "predict" } Toxicity predictions
+          = link_to "Predict", "/predict"
+        %li{:class => ("selected" if /tasks/ =~ request.path )}
+          = link_to "Tasks", "/tasks"
         %li{:class => ("selected" if /about/ =~ request.path )}
-          %a{ :href => "about" } About
+          = link_to "About", "/about"
 
     .content
 
