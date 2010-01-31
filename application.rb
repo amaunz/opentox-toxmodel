@@ -1,8 +1,10 @@
-['rubygems', 'opentox-ruby-api-wrapper', "haml", "sass"].each do |lib|
+['rubygems', "haml", "sass"].each do |lib|
 	require lib
 end
 require 'rack-flash'
 #require 'benchmark'
+gem 'opentox-ruby-api-wrapper', '= 1.2.6'
+require 'opentox-ruby-api-wrapper'
 gem 'sinatra-static-assets'
 require 'sinatra/static_assets'
 
@@ -108,6 +110,7 @@ post '/predict/?' do # post chemical name to model
 end
 
 post '/task/cancel' do
+	puts params[:task_uri]
 	task = OpenTox::Task.find(params[:task_uri])
 	task.cancel
 	redirect url_for('/tasks')

@@ -13,7 +13,7 @@
       %td= t.status
       %td= t.created_at
       %td= t.finished_at
-      %td
+      -# %td
         - case t.status
         - when /created|started/
           %form{:name => "cancel", :action => url_for("/task/cancel"), :method => 'post'}
