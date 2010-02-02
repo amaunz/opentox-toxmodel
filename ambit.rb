@@ -31,7 +31,7 @@ class Ambit
 	def self.features(uri)
 		features = {}
 		index = Ambit.new File.join(uri,"features")
-=begin
+		LOGGER.debug index.uri
 		index.model.subjects(RDF['type'],OT['Feature']).each do |s|
 			title = index.model.object(s,DC['title']).to_s
 			identifier = index.model.object(s,DC['identifier']).to_s.split(/\^/).first
@@ -39,7 +39,7 @@ class Ambit
 		end
 		#index.model.find(nil,nil,nil).each do |s,p,o|
 		#index.model.subjects(nil,nil).each do |s|
-=end
+=begin
 		index.model.subjects(DC['type'],'http://www.w3.org/2001/XMLSchema#string').each do |s|
 			title = index.model.object(s,DC['title']).to_s
 			f = index.model.object(s,RDF['type']).to_s
@@ -58,6 +58,7 @@ class Ambit
 			identifier = index.model.object(s,DC['identifier']).to_s.split(/\^/).first
 			features[identifier] = title +  f 
 		end
+=end
 		features.sort{|a,b| a[1] <=> b[1]}
 	end
 
