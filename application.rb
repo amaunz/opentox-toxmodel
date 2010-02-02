@@ -3,7 +3,7 @@
 end
 require 'rack-flash'
 #require 'benchmark'
-gem 'opentox-ruby-api-wrapper', '= 1.2.6'
+gem 'opentox-ruby-api-wrapper', '= 1.2.7'
 require 'opentox-ruby-api-wrapper'
 gem 'sinatra-static-assets'
 require 'sinatra/static_assets'
