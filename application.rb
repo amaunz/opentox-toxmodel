@@ -2,7 +2,6 @@
 	require lib
 end
 require 'rack-flash'
-#require 'benchmark'
 gem 'opentox-ruby-api-wrapper', '= 1.2.7'
 require 'opentox-ruby-api-wrapper'
 gem 'sinatra-static-assets'
@@ -10,6 +9,20 @@ require 'sinatra/static_assets'
 
 use Rack::Flash
 set :sessions, true
+
+helpers do
+	def activity(a)
+		case a.to_s
+		when "true"
+			act = "active"
+		when "false"
+			act = "inactive"
+		else
+			act = "not available"
+		end
+		act
+	end
+end
 
 get '/?' do
 	redirect url_for('/create')
@@ -75,14 +88,15 @@ post '/predict/?' do # post chemical name to model
 		@compound = OpenTox::Compound.new(:name => params[:identifier])
 	rescue
 		flash[:notice] = "Could not find a structure for #{@identifier}. Please try again."
-		redirect '/predict'
+		redirect url_for('/predict')
 	end
 	@predictions = []
 	params[:selection].keys.each do |uri|
 		prediction = nil
 		confidence = nil
 		title = nil
-		prediction = RestClient.post uri, :compound_uri => @compound.uri, :accept => "application/x-yaml"
+		db_activities = []
+		prediction = RestClient.post uri, :compound_uri => @compound.uri#, :accept => "application/x-yaml"
 		model = Redland::Model.new Redland::MemoryStore.new
 		parser = Redland::Parser.new
 		parser.parse_string_into_model(model,prediction,'/')
@@ -93,18 +107,13 @@ post '/predict/?' do # post chemical name to model
 			feature_name = model.object(feature,DC['title']).to_s
 			prediction = model.object(v,OT['value']).to_s if feature_name.match(/classification/)
 			confidence = model.object(v,OT['value']).to_s if feature_name.match(/confidence/)
+			db_activities << model.object(v,OT['value']).to_s if feature_name.match(/#{title}/)
 		end
-		case prediction.to_s
-		when "true"
-			prediction = "active"
-		when "false"
-			prediction = "inactive"
-		else
-			prediction = "not available"
-		end
-		@predictions << {:title => title, :prediction => prediction, :confidence => confidence}
+		@predictions << {:title => title, :prediction => prediction, :confidence => confidence, :measured_activities => db_activities}
+		LOGGER.debug db_activities.to_yaml
 	end
 
+		LOGGER.debug @predictions.to_yaml
 	haml :prediction
 	#@predictions.to_yaml 
 end

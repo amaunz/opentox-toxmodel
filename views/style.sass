@@ -62,16 +62,20 @@ body
       padding: 1%
       border: 1px solid red
 
-    .upload
+    .input
       text-align: left
       form
-        li
-          clear: left
+        fieldset
+          border: 0
+        legend
+          font-weight: bold
+          color = !fg_color
         label
-          width: 20em
-          float: left
-          margin-right: 0.5em
+          width: 25em
           display: block
+          float: left
+        br
+          clear: both
 
     .predictions
       :text-align center
@@ -88,5 +92,11 @@ body
         td
           :border 1px solid
           :padding 2%
+
+.active
+  color: red
+
+.inactive
+  color: green
 
   .footer

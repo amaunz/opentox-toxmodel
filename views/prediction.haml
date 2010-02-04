@@ -9,8 +9,24 @@
       - @predictions.each do |p|
         %td
           %b
-            = p[:title] + ":"
-            = p[:prediction]
-          %br
-            Confidence:
-            = p[:confidence]
+            = p[:title].gsub(/_/,' ') + ":"
+          - if p[:measured_activities].size > 0
+            %br
+            - p[:measured_activities].each do |a|
+              - if activity(a) == 'active'
+                .active
+                  = activity(a)
+              - elsif activity(a) == 'inactive'
+                .inactive
+                  = activity(a)
+            %br (training data)
+          - else
+            - if activity(p[:prediction]) == 'active'
+              .active
+                = activity(p[:prediction])
+            - elsif activity(p[:prediction]) == 'inactive'
+              .inactive
+                = activity(p[:prediction])
+            - if p[:confidence]
+              %br
+                = "(confidence: #{sprintf('%.03f', p[:confidence].to_f.abs)})"

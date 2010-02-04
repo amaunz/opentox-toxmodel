@@ -1,17 +1,15 @@
-.upload
+.input
   %form{ :action => url_for('/upload'), :method => "post", :enctype => "multipart/form-data" }
-    %ol
-      %li 
-        %label{:for => 'endpoint'}Enter endpoint name:
-        %input{:type => 'text', :name => 'endpoint', :id => 'endpoint'}
-      %li
-        %label{:for => 'file'}
-          Upload training data in CSV format:
-        %input{:type => 'file', :name => 'file', :id => 'file'}
-        (
-        = link_to "formatting instructions ", 'csv_format'
-        )
-      %li
-        %input{ :type => "submit", :value => "Create model"}
-        = link_to "Cancel", 'create'
+    %fieldset
+      %legend Upload training data and create a prediction model
+      %label{:for => 'endpoint'} 1. Enter endpoint name:
+      %input{:type => 'text', :name => 'endpoint', :id => 'endpoint'}
+      %br
+      %label{:for => 'file'} 2. Select training data in CSV format:
+      %input{:type => 'file', :name => 'file', :id => 'file'}
+      (
+      = link_to "formatting instructions ", 'csv_format'
+      )
+    %input{ :type => "submit", :value => "Create model"}
+    = link_to "Cancel", 'create'
 
