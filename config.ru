@@ -20,4 +20,8 @@ elsif ENV['RACK_ENV'] == 'development'
   use Rack::ShowExceptions
 end
 
+require 'rack/flash'
+use Rack::Session::Cookie
+use Rack::Flash
+
 run Sinatra::Application
