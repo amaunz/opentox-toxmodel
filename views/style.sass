@@ -4,13 +4,28 @@
 !text_color = black
 
 body
+  min-width: 30em
+  font-family: arial
   background-color = !body_color
   color = !text_color
   height: 100%
   padding: 1em
   
-  h1
-    text-align: right
+  .headline
+  
+    h1
+      color = !fg_color
+      margin: 0
+      padding: 0
+      background-color = !body_color
+      padding-left: 0.5em
+      padding-bottom: 0.5em
+      
+    img
+      margin: 0
+      position: absolute
+      top: 0.7em
+      left: 40em
 
   .index
 
@@ -36,7 +51,7 @@ body
         text-decoration: none
         color = !bg_color
         &:hover
-          color = !bg_color
+          color = #5D308A
     
     li.selected
       font-weight: bolder
@@ -100,3 +115,5 @@ body
   color: green
 
   .footer
+    margin: 0.5em
+    padding: 0.5em

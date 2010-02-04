@@ -7,8 +7,10 @@
     %link{:rel=>'stylesheet', :href=>'stylesheets/style.css', :type => "text/css"}       
 
   %body
-    %h1 ToxModel
-
+    .headline
+      %h1 ToxModel
+      %img{:src => "/opentox_logo.png", :alt => "OpenTox"}
+         
     .index
       %ul
         %li{:class => ("selected" if /create/ =~ request.path )}
