@@ -15,12 +15,16 @@
           = link_to "Create", "/create"
         %li{:class => ("selected" if /predict/ =~ request.path )}
           = link_to "Predict", "/predict"
-        %li{:class => ("selected" if /tasks/ =~ request.path )}
+        -#%li{:class => ("selected" if /tasks/ =~ request.path )}
           = link_to "Tasks", "/tasks"
         %li{:class => ("selected" if /about/ =~ request.path )}
           = link_to "About", "/about"
 
     .content
+
+      .notice 
+        This service is for testing purposes only - once a week all models will be deleted. Please send bug reports and feature requests to our 
+        %a{:href => 'http://github.com/helma/opentox-toxmodel/issues'} issue tracker.
 
       - if flash[:notice]
         .notice

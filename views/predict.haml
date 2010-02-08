@@ -1,4 +1,5 @@
 .input
+  = link_to 'Reload', '/predict'
   - unless @models.nil?
     %form{ :action => url_for('/predict'), :method => "post", :enctype => "multipart/form-data" }
       %fieldset
@@ -16,5 +17,5 @@
           %br
 
       %input{ :type => "submit", :value => "Predict"}
-      = link_to 'Cancel', '/' 
+      = link_to 'Cancel', '/predict' 
 
