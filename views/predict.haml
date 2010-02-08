@@ -1,5 +1,4 @@
 .input
-  = link_to 'Reload', '/predict'
   - unless @models.nil?
     %form{ :action => url_for('/predict'), :method => "post", :enctype => "multipart/form-data" }
       %fieldset
@@ -7,7 +6,11 @@
         %label{:for => 'identifier'} Name, InChI, Smiles, CAS, ...
         %input{:type => 'text', :name => 'identifier', :id => 'identifier'}
       %fieldset
-        %legend Choose one or more prediction models
+        %legend
+          Choose one or more prediction models
+          (
+          = link_to 'Reload', '/predict'
+          )
         - @models.each do |model|
           - yaml = RestClient.get model, :accept => 'application/x-yaml'
           - yaml = YAML.load yaml
