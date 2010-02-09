@@ -75,7 +75,7 @@ post '/upload' do # create a new model
 			flash[:notice] = "Irregular activity '#{items[1]}' for SMILES #{smiles}. Please use 1 for active and 0 for inactive compounds"
 		end
 	end
-	dataset_uri = dataset.save
+	dataset_uri = dataset.save #fails
 	task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :feature_uri => feature_uri)
 	flash[:notice] = "Model creation started - this may take some time. As soon as the has been finished it will appear in the list below, if you #{link_to("reload this page", "/predict")}."
 	session[:task_uri] = task_uri
