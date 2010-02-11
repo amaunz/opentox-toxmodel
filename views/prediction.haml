@@ -27,6 +27,9 @@
             - elsif activity(p[:prediction]) == 'inactive'
               .inactive
                 = activity(p[:prediction])
+            - else
+              %br
+                %em not available
             - if p[:confidence]
               %br
                 = "(confidence: #{sprintf('%.03f', p[:confidence].to_f.abs)})"

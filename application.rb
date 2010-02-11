@@ -77,7 +77,7 @@ post '/upload' do # create a new model
 	end
 	dataset_uri = dataset.save #fails
 	task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :feature_uri => feature_uri)
-	flash[:notice] = "Model creation started - this may take some time. As soon as the has been finished it will appear in the list below, if you #{link_to("reload this page", "/predict")}."
+	flash[:notice] = "Model creation started - this may take some time (up to several hours for large datasets). As soon as the has been finished it will appear in the list below, if you #{link_to("reload this page", "/predict")}."
 	session[:task_uri] = task_uri
 	redirect url_for('/predict')
 end
