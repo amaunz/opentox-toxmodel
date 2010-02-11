@@ -87,7 +87,11 @@ post '/predict/?' do # post chemical name to model
 	begin
 		@compound = OpenTox::Compound.new(:name => params[:identifier])
 	rescue
-		flash[:notice] = "Could not find a structure for #{@identifier}. Please try again."
+		flash[:notice] = "Could not find a structure for '#{@identifier}'. Please try again."
+		redirect url_for('/predict')
+	end
+	unless params[:selection]
+		flash[:notice] = "Please select an endpoint from the list!"
 		redirect url_for('/predict')
 	end
 	@predictions = []
