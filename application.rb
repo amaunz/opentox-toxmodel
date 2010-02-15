@@ -81,7 +81,7 @@ post '/upload' do # create a new model
 	end
 	dataset_uri = dataset.save #fails
 	task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :feature_uri => feature_uri)
-	flash[:notice] = "Model creation started - this may take some time. As soon as the has been finished it will appear in the list below, if you #{link_to("reload this page", "/predict")}."
+	flash[:notice] = "Model creation started - this may take some time (up to several hours for large datasets). As soon as the has been finished it will appear in the list below, if you #{link_to("reload this page", "/predict")}."
 	session[:task_uri] = task_uri
 	redirect url_for('/predict')
 end
@@ -91,7 +91,11 @@ post '/predict/?' do # post chemical name to model
 	begin
 		@compound = OpenTox::Compound.new(:name => params[:identifier])
 	rescue
-		flash[:notice] = "Could not find a structure for #{@identifier}. Please try again."
+		flash[:notice] = "Could not find a structure for '#{@identifier}'. Please try again."
+		redirect url_for('/predict')
+	end
+	unless params[:selection]
+		flash[:notice] = "Please select an endpoint from the list!"
 		redirect url_for('/predict')
 	end
 	@predictions = []
