@@ -56,8 +56,12 @@ get '/task' do
 end
 
 post '/upload' do # create a new model
+	unless params[:endpoint] and params[:file] and params[:file][:tempfile]
+		flash[:notice] = "Please enter an endpoint name and upload a CSV file."
+		redirect url_for('/create')
+	end
 	dataset = OpenTox::Dataset.new
-	title = params[:endpoint].sub(/\s+/,'_')
+	title = URI.encode params[:endpoint]#.gsub(/\s+/,'_')
 	dataset.title = title
 	feature_uri = url_for("/feature#"+title, :full)
 	feature = dataset.find_or_create_feature(feature_uri)
