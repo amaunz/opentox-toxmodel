@@ -15,7 +15,8 @@
           - yaml = RestClient.get model, :accept => 'application/x-yaml'
           - yaml = YAML.load yaml
           %label{:for => model}
-            = yaml[:endpoint].split(/#/).last.gsub(/_/,' ')
+            = URI.decode yaml[:endpoint].split(/#/).last
+            =# link_to RestClient.get(File.join(model,'name')).to_s, "/model?uri=#{URI.encode model}"
           %input{:type => 'checkbox', :name => "selection[#{model}]", :value => true, :id => model} 
           %br
 

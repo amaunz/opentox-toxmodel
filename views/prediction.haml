@@ -9,7 +9,8 @@
       - @predictions.each do |p|
         %td
           %b
-            = p[:title].gsub(/_/,' ') + ":"
+            =# p[:title].gsub(/_/,' ') + ":"
+            = p[:title] + ":"
           - if p[:measured_activities].size > 0
             %br
             - p[:measured_activities].each do |a|

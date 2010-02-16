@@ -10,6 +10,19 @@ require 'sinatra/static_assets'
 use Rack::Flash
 set :sessions, true
 
+#class ToxPredictModel
+#	include DataMapper::Resource
+#	property :id, Serial
+#	property :name, String
+#	property :uri, String, :length => 255
+#	property :task_uri, String, :length => 255
+#	property :status, String, :length => 255
+#	property :messages, Text, :length => 2**32-1 
+#	property :created_at, DateTime
+#end
+
+#DataMapper.auto_upgrade!
+
 helpers do
 	def activity(a)
 		case a.to_s
@@ -28,7 +41,14 @@ get '/?' do
 	redirect url_for('/create')
 end
 
+get '/model/:id/?' do
+	#@model = ToxPredictModel.get(params[:id])
+	@model = YAML.load(RestClient.get params[:uri], :accept => "application/x-yaml")
+	haml :model
+end
+
 get '/predict/?' do 
+	#@models = ToxPredictModel.all
 	@models = OpenTox::Model::Lazar.find_all
 	haml :predict
 end
@@ -60,30 +80,73 @@ post '/upload' do # create a new model
 		flash[:notice] = "Please enter an endpoint name and upload a CSV file."
 		redirect url_for('/create')
 	end
-	dataset = OpenTox::Dataset.new
+	unless params[:file][:type] == "text/csv"
+		flash[:notice] = "Please upload a CSV file - at present we cannot handle other file types."
+		redirect url_for('/create')
+	end
+	#@model = ToxPredictModel.new
+	#@model.name = params[:endpoint]
+	#@model.status = "started"
+	#@model.save
 	title = URI.encode params[:endpoint]#.gsub(/\s+/,'_')
+	dataset = OpenTox::Dataset.new
 	dataset.title = title
 	feature_uri = url_for("/feature#"+title, :full)
 	feature = dataset.find_or_create_feature(feature_uri)
+	smiles_errors = []
+	activity_errors = []
+	duplicates = {}
+	nr_compounds = 0
+	line_nr = 1
 	params[:file][:tempfile].each_line do |line|
 		items = line.chomp.split(/\s*,\s*/)
 		smiles = items[0]
-		compound_uri = OpenTox::Compound.new(:smiles => smiles).uri
-		compound = dataset.find_or_create_compound(compound_uri)
-		case items[1].to_s
-		when '1'
-			dataset.add(compound,feature,true)
-		when '0'
-			dataset.add(compound,feature,false)
+		c = OpenTox::Compound.new(:smiles => smiles)
+		if c.inchi != ""
+			duplicates[c.inchi] = [] unless duplicates[c.inchi]
+			duplicates[c.inchi] << "Line #{line_nr}: " + line.chomp
+			compound_uri = c.uri
+			compound = dataset.find_or_create_compound(compound_uri)
+			case items[1].to_s
+			when '1'
+				dataset.add(compound,feature,true)
+				nr_compounds += 1
+			when '0'
+				dataset.add(compound,feature,false)
+				nr_compounds += 1
+			else
+				activity_errors << "Line #{line_nr}: " + line.chomp
+			end
 		else
-			flash[:notice] = "Irregular activity '#{items[1]}' for SMILES #{smiles}. Please use 1 for active and 0 for inactive compounds"
+			smiles_errors << "Line #{line_nr}: " + line.chomp
 		end
+		line_nr += 1
 	end
-	dataset_uri = dataset.save #fails
+	dataset_uri = dataset.save 
 	task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :feature_uri => feature_uri)
-	flash[:notice] = "Model creation started - this may take some time (up to several hours for large datasets). As soon as the has been finished it will appear in the list below, if you #{link_to("reload this page", "/predict")}."
+
+	@notice = "Model creation for <b>#{params[:endpoint]}i</b> (#{nr_compounds} compounds) started - this may take some time (up to several hours for large datasets). As soon as the has been finished it will appear in the list below, if you #{link_to("reload this page", "/predict")}."
+
+	if smiles_errors.size > 0
+		@notice += "<p>The following Smiles structures were not readable and have been ignored:</p>"
+		@notice += smiles_errors.join("<br/>")
+	end
+	if activity_errors.size > 0
+		@notice += "<p>The following structures had irregular activities and have been ignored (please use 1 for active and 0 for inactive compounds):</p>"
+		@notice += activity_errors.join("<br/>")
+	end
+	duplicate_warnings = ''
+	duplicates.each {|inchi,lines| duplicate_warnings += "<p>#{lines.join('<br/>')}</p>" if lines.size > 1 }
+	LOGGER.debug duplicate_warnings
+	unless duplicate_warnings == ''
+		@notice += "<p>The following structures were duplicated in the dataset (this is not a problem for the algorithm, but you should make sure, that the results were obtained from <em>independent</em> experiments):</p>" 
+		@notice +=  duplicate_warnings
+	end
 	session[:task_uri] = task_uri
-	redirect url_for('/predict')
+	#redirect url_for('/predict')
+	@models = OpenTox::Model::Lazar.find_all
+	haml :predict
+
 end
 
 post '/predict/?' do # post chemical name to model
@@ -108,8 +171,12 @@ post '/predict/?' do # post chemical name to model
 		model = Redland::Model.new Redland::MemoryStore.new
 		parser = Redland::Parser.new
 		parser.parse_string_into_model(model,prediction,'/')
-		f = model.subject(RDF['type'],OT['Feature']) # this can be dangerous if OWL is not properly sorted
-		title = model.object(f,DC['title']).to_s
+		yaml = RestClient.get uri, :accept => 'application/x-yaml'
+		yaml = YAML.load yaml
+		title = URI.decode yaml[:endpoint].split(/#/).last
+		#f = model.subject(RDF['type'],OT['Feature']) # this can be dangerous if OWL is not properly sorted
+		#title = RestClient.get(File.join(uri,"name")).to_s
+		#title = model.object(f,DC['title']).to_s
 		model.subjects(RDF['type'], OT['FeatureValue']).each do |v|
 			feature = model.object(v,OT['feature'])
 			feature_name = model.object(feature,DC['title']).to_s
@@ -118,7 +185,6 @@ post '/predict/?' do # post chemical name to model
 			db_activities << model.object(v,OT['value']).to_s if feature_name.match(/#{title}/)
 		end
 		@predictions << {:title => title, :prediction => prediction, :confidence => confidence, :measured_activities => db_activities}
-		LOGGER.debug db_activities.to_yaml
 	end
 
 		LOGGER.debug @predictions.to_yaml

@@ -1,19 +1,26 @@
 .input
+
+  %p
+    This service creates 
+    %a{:href => 'http://lazar.in-silico.de'} lazar
+    prediction models (more model building algorithms will follow) from your uploaded datasets. Here are
+    = link_to "instructions", '/csv_format'
+    , how to create training datasets in Excel.
+
   %form{ :action => url_for('/upload'), :method => "post", :enctype => "multipart/form-data" }
     %fieldset
       %legend
         Upload training data and create a
         %a{:href => 'http://lazar.in-silico.de'} lazar
         model
-      %label{:for => 'endpoint'} 1. Enter endpoint name:
+      %label{:for => 'endpoint'} 1. Enter a name for your endpoint:
       %input{:type => 'text', :name => 'endpoint', :id => 'endpoint'}
-      %em (please use only letters, numbers and spaces - this will be fixed soon)
       %br
-      %label{:for => 'file'} 2. Select training data in CSV format:
+      %label{:for => 'file'}
+        2. Upload training data in
+        = link_to "CSV", '/csv_format'
+        format:
       %input{:type => 'file', :name => 'file', :id => 'file'}
-      (
-      = link_to "formatting instructions ", 'csv_format'
-      )
     %input{ :type => "submit", :value => "Create model"}
     = link_to "Cancel", 'create'
 

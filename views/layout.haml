@@ -7,7 +7,7 @@
     %link{:rel=>'stylesheet', :href=>'stylesheets/style.css', :type => "text/css"}       
 
   %body
-    %h1 ToxModel
+    %h1 ToxCreate
          
     .index
       %ul
@@ -29,6 +29,10 @@
       - if flash[:notice]
         .notice
           = flash[:notice]
+
+      - if @notice 
+        .notice
+          = @notice
 
       = yield
 
