@@ -125,7 +125,7 @@ post '/upload' do # create a new model
 	dataset_uri = dataset.save 
 	task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :feature_uri => feature_uri)
 
-	@notice = "Model creation for <b>#{params[:endpoint]}i</b> (#{nr_compounds} compounds) started - this may take some time (up to several hours for large datasets). As soon as the has been finished it will appear in the list below, if you #{link_to("reload this page", "/predict")}."
+	@notice = "Model creation for <b>#{params[:endpoint]}</b> (#{nr_compounds} compounds) started - this may take some time (up to several hours for large datasets). As soon as the has been finished it will appear in the list below, if you #{link_to("reload this page", "/predict")}."
 
 	if smiles_errors.size > 0
 		@notice += "<p>The following Smiles structures were not readable and have been ignored:</p>"
