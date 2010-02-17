@@ -2,9 +2,9 @@
 %p
   The input file should contain two columns, separated by a comma. Enter in the first column the chemical structure in
   = link_to "SMILES", "http://en.wikipedia.org/wiki/Simplified_molecular_input_line_entry_specification"
-  format, in the second column the activity classification (1: active, 0: inactive).
-%p Example:
-%p
+  format, in the second column the activity classification (1: active, 0: inactive), e.g.
+
+.code
   %code
     %br CC(=O)Nc1ccc(O)cc1, 1  
     %br O=c1[nH]cnc2[nH]ncc12, 1  
@@ -16,4 +16,8 @@
     %br CC(C)(C)NCC(O)COc1cccc2CC(O)C(O)Cc12, 0 
     %br CN1CCCC1c2cccnc2, 0 
 
-%p You can create input files in Excel and export them as CSV files with the "Save As" option from the menu, selecting the CSV (comma delimited) format.
+%p
+  Here is an example for download:
+  = link_to "hamster_carcinogenicity.csv", "/hamster_carcinogenicity.csv"
+
+%p You can create input files in Excel: Create a sheet with two columns and export them as CSV file with the "Save As" option from the menu, selecting the CSV (comma delimited) format.

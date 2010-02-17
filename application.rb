@@ -80,10 +80,12 @@ post '/upload' do # create a new model
 		flash[:notice] = "Please enter an endpoint name and upload a CSV file."
 		redirect url_for('/create')
 	end
+=begin
 	unless params[:file][:type] == "text/csv"
 		flash[:notice] = "Please upload a CSV file - at present we cannot handle other file types."
 		redirect url_for('/create')
 	end
+=end
 	#@model = ToxPredictModel.new
 	#@model.name = params[:endpoint]
 	#@model.status = "started"
@@ -99,6 +101,10 @@ post '/upload' do # create a new model
 	nr_compounds = 0
 	line_nr = 1
 	params[:file][:tempfile].each_line do |line|
+		unless line.chomp.match(/^.+,.+$/) # check CSV format - not all browsers provide correct content-type
+			flash[:notice] = "Please upload a CSV file created according to these #{link_to "instructions", "csv_format"}."
+			redirect url_for('/create')
+		end
 		items = line.chomp.split(/\s*,\s*/)
 		smiles = items[0]
 		c = OpenTox::Compound.new(:smiles => smiles)
@@ -125,7 +131,7 @@ post '/upload' do # create a new model
 	dataset_uri = dataset.save 
 	task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :feature_uri => feature_uri)
 
-	@notice = "Model creation for <b>#{params[:endpoint]}</b> (#{nr_compounds} compounds) started - this may take some time (up to several hours for large datasets). As soon as the has been finished it will appear in the list below, if you #{link_to("reload this page", "/predict")}."
+	@notice = "Model creation for <b>#{params[:endpoint]}</b> (#{nr_compounds} compounds) started - this may take some time (up to several hours for large datasets). As soon as the model is ready it will appear in the list below, if you #{link_to("reload this page", "/predict")}."
 
 	if smiles_errors.size > 0
 		@notice += "<p>The following Smiles structures were not readable and have been ignored:</p>"
@@ -151,14 +157,14 @@ end
 
 post '/predict/?' do # post chemical name to model
 	@identifier = params[:identifier]
+	unless params[:selection] and params[:identifier] != ''
+		flash[:notice] = "Please enter a compound identifier and select an endpoint from the list."
+		redirect url_for('/predict')
+	end
 	begin
 		@compound = OpenTox::Compound.new(:name => params[:identifier])
 	rescue
 		flash[:notice] = "Could not find a structure for '#{@identifier}'. Please try again."
-		redirect url_for('/predict')
-	end
-	unless params[:selection]
-		flash[:notice] = "Please select an endpoint from the list!"
 		redirect url_for('/predict')
 	end
 	@predictions = []

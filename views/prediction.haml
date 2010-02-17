@@ -3,9 +3,11 @@
 .predictions
   %table
     %tr
+      %th{:colspan => @predictions.size+1}
+        = @identifier
+    %tr
       %th
         %img{:src => @compound.image_uri, :alt => @compound.smiles}
-        %br= @identifier
       - @predictions.each do |p|
         %td
           %b

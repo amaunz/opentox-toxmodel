@@ -1,24 +1,38 @@
-!bg_color = #FFFFF3
-!fg_color = #36648B
-!body_color = #ECF1EF
+/*
+  !bg_color = #FFFFF3
+  !fg_color = #36648B
+  !body_color = #ECF1EF
+  !text_color = black
+
+!bg_color = #DDFFFF
+//#97FFFF
+//#ECF1EF
+!fg_color = #5D308A
+!body_color = white
 !text_color = black
 
 body
   min-width: 30em
   font-family: Verdana
+  //font-family: Helvetica
+  font-size: 14px
   background-color = !body_color
   color = !text_color
-  height: 100%
+  //height: 100%
   padding: 1em
   
-  h1
+  //h1
     text-align: right
     color = !fg_color
     margin: 0
     padding: 0
     background-color = !body_color
+  img
+    float: right
+    height: 4em
       
   .index
+    clear: both
 
     ul
       margin: 0
@@ -31,9 +45,9 @@ body
       padding: 0
       display: inline
       border-right: 1px solid
-        color = !bg_color
+        color = !body_color
       border-top: 1px solid
-        color = !bg_color
+        color = !body_color
       background-color = !fg_color
       padding-left: 0.5em
       padding-right: 0.5em
@@ -58,20 +72,28 @@ body
   .content
     background-color = !bg_color
     height: 100%
-    padding: 0.5em
+    //padding: 0.5em
+    //margin: 1%
+    padding: 1em
     border: 1px solid
       color = !fg_color
 
     .notice
-      background-color = !body_color
-      margin: 2%
-      padding: 1%
+      //background-color = !body_color
+      padding: 1em
+      background-color:  #F4F4F4
       border: 1px solid red
 
     .input
       text-align: left
       form
+        padding: 1em
+        background-color: #F4F4F4
+        border: 1px solid
+          color = !fg_color
         fieldset
+          margin: 0
+          padding: 0
           border: 0
         legend
           font-weight: bold
@@ -83,21 +105,30 @@ body
         br
           clear: both
 
+    .code
+      border: 1px solid black
+      padding: 1%
+      background-color: white
+
     .predictions
       :text-align center
       table
-        background-color: white
         :border-spacing 0
         :border-collapse collapse
         :margin 0
-        :border 1px solid
 
         th
-          :border 0
+          color = !body_color
+          background-color = !fg_color
+          border: 1px solid
           :margin 2%
         td
           :border 1px solid
+          background-color: #F4F4F4
           :padding 2%
+        img
+          padding: 0
+          height: 100%
 
   .footer
     margin: 0.5em
