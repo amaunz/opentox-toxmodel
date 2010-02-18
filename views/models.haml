@@ -1,0 +1,20 @@
+%p Get an overview about ToxCreate models. This page is refreshed every 15 seconds to update the model status.
+- @models.each do |model|
+  %h2
+    = model.name
+  %dl
+    %dt Status:
+    %dd
+      = model.status
+      (
+      = link_to "delete", "/model/#{model.id}/delete"
+      )
+    %dt Started:
+    %dd= model.created_at
+    %dt Details:
+    %dd= model.messages
+    %dt Validation:
+    %dd
+      %em
+        to be added
+

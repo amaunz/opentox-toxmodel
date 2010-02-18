@@ -1,12 +1,5 @@
-/*
-  !bg_color = #FFFFF3
-  !fg_color = #36648B
-  !body_color = #ECF1EF
-  !text_color = black
-
 !bg_color = #DDFFFF
-//#97FFFF
-//#ECF1EF
+!bg_color2 = #F4F4F4
 !fg_color = #5D308A
 !body_color = white
 !text_color = black
@@ -14,19 +7,11 @@
 body
   min-width: 30em
   font-family: Verdana
-  //font-family: Helvetica
   font-size: 14px
   background-color = !body_color
   color = !text_color
-  //height: 100%
   padding: 1em
   
-  //h1
-    text-align: right
-    color = !fg_color
-    margin: 0
-    padding: 0
-    background-color = !body_color
   img
     float: right
     height: 4em
@@ -81,14 +66,14 @@ body
     .notice
       //background-color = !body_color
       padding: 1em
-      background-color:  #F4F4F4
+      background-color = !bg_color2  
       border: 1px solid red
 
     .input
       text-align: left
       form
         padding: 1em
-        background-color: #F4F4F4
+        background-color = !bg_color2 
         border: 1px solid
           color = !fg_color
         fieldset
@@ -124,11 +109,23 @@ body
           :margin 2%
         td
           :border 1px solid
-          background-color: #F4F4F4
+          background-color = !bg_color2
           :padding 2%
         img
           padding: 0
           height: 100%
+
+  dl
+    padding: 1em
+    background-color = !bg_color2
+    border: 1px solid
+    dt
+      width: 10em
+      font-weight: bold
+      float: left
+      clear: left
+    dd
+      //padding-left: 2em
 
   .footer
     margin: 0.5em

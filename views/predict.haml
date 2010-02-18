@@ -1,7 +1,6 @@
 .input
-  %p This service makes predictions with OpenTox models.
-  %p Click on a model to obtain detailed model information (training data, validation results, ...).
-  - unless @models.nil?
+  %p Use this service to obtain predictions from OpenTox models.
+  - unless @models.empty?
     %form{ :action => url_for('/predict'), :method => "post", :enctype => "multipart/form-data" }
       %fieldset
         %legend Enter a compound identifier
@@ -10,16 +9,10 @@
       %fieldset
         %legend
           Choose one or more prediction models
-          (
-          = link_to 'Reload', '/predict'
-          )
         - @models.each do |model|
-          - yaml = RestClient.get model, :accept => 'application/x-yaml'
-          - yaml = YAML.load yaml
-          %label{:for => model}
-            = URI.decode yaml[:endpoint].split(/#/).last
-            =# link_to RestClient.get(File.join(model,'name')).to_s, "/model?uri=#{URI.encode model}"
-          %input{:type => 'checkbox', :name => "selection[#{model}]", :value => true, :id => model} 
+          %label{:for => model.id}
+            = model.name
+          %input{:type => 'checkbox', :name => "selection[#{model.id}]", :value => true, :id => model.id} 
           %br
 
       %input{ :type => "submit", :value => "Predict"}
