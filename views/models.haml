@@ -7,12 +7,15 @@
     %dd
       = model.status
       (
-      = link_to "delete", "/model/#{model.id}/delete"
+      %a{:href => url_for("/model/#{model.id}/delete"), :onclick => 'return confirm("Are you sure?");'} delete
       )
     %dt Started:
     %dd= model.created_at
     %dt Details:
     %dd= model.messages
+    %dt URI:
+    %dd
+      %a{:href => model.uri, :accept => "application/rdf+xml"} #{model.uri}
     %dt Validation:
     %dd
       %em
