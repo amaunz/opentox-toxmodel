@@ -51,11 +51,15 @@ get '/models/?' do
 end
 
 get '/model/:id/delete/?' do
+	redirect url_for("/model/#{params[:id]}")
+end
+
+delete '/model/:id/?' do
 	model = ToxCreateModel.get(params[:id])
 	RestClient.delete model.uri if model.uri
 	RestClient.delete model.task_uri if model.task_uri
 	model.destroy!
-	redirect url_for('/predict')
+	redirect url_for('/models')
 end
 
 get '/predict/?' do 
