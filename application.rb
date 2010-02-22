@@ -185,9 +185,15 @@ post '/predict/?' do # post chemical name to model
 		prediction = nil
 		confidence = nil
 		title = nil
+<<<<<<< HEAD
 		db_activities = []
 		prediction = RestClient.post model.uri, :compound_uri => @compound.uri#, :accept => "application/x-yaml"
 		redland_model = Redland::Model.new Redland::MemoryStore.new
+=======
+		resource = RestClient::Resource.new(uri, :user => @@users[:users].keys[0], :password => @@users[:users].values[0])		
+		prediction = resource.post :compound_uri => @compound.uri, :accept => "application/x-yaml"
+		model = Redland::Model.new Redland::MemoryStore.new
+>>>>>>> micha/test
 		parser = Redland::Parser.new
 		parser.parse_string_into_model(redland_model,prediction,'/')
 		title = model.name
