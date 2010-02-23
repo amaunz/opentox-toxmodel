@@ -13,7 +13,7 @@ set :sessions, true
 class ToxCreateModel
 	include DataMapper::Resource
 	property :id, Serial
-	property :name, String
+	property :name, String, :length => 255
 	property :uri, String, :length => 255
 	property :task_uri, String, :length => 255
 	property :messages, Text, :length => 2**32-1 
