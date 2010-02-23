@@ -1,7 +1,18 @@
+-# :javascript
+  function deletemodel(uri) {
+    var xmlhttp;
+    return confirm("Are you sure?");
+    xmlhttp=new XMLHttpRequest();
+    xmlhttp.open('DELETE',uri,false)
+    xmlhttp.send(null);
+  }
+
 %p Get an overview about ToxCreate models. This page is refreshed every 15 seconds to update the model status.
 - @models.each do |model|
+  - uri = url_for("/model/#{model.id}", :full)
   %h2
     = model.name
+    -#%button{:onclick => "deletemodel('#{uri}')"} delete
   %dl
     %dt Status:
     %dd
@@ -15,7 +26,11 @@
     %dd= model.messages
     %dt URI:
     %dd
-      %a{:href => model.uri, :accept => "application/rdf+xml"} #{model.uri}
+      - if model.uri
+        %a{:href => model.uri, :accept => "application/rdf+xml"} #{model.uri}
+        %em (model representation in OWL-DL - experts only)
+      - else
+        %em model under construction
     %dt Validation:
     %dd
       %em

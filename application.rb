@@ -46,24 +46,30 @@ end
 
 get '/models/?' do
 	@models = ToxCreateModel.all(:order => [ :created_at.desc ])
+	@models.each do |model|
+		if !model.uri and model.status == "completed"
+			model.uri = RestClient.get(File.join(model.task_uri, 'resource')).to_s
+			model.save
+		end
+	end
 	@refresh = true #if @models.collect{|m| m.status}.grep(/started|created/)
 	haml :models
 end
 
 get '/model/:id/delete/?' do
-	redirect url_for("/model/#{params[:id]}")
-end
-
-delete '/model/:id/?' do
 	model = ToxCreateModel.get(params[:id])
-	RestClient.delete model.uri if model.uri
-	RestClient.delete model.task_uri if model.task_uri
+	begin
+		RestClient.delete model.uri if model.uri
+		RestClient.delete model.task_uri if model.task_uri
+	rescue
+	end
 	model.destroy!
+	flash[:notice] = "#{model.name} model deleted."
 	redirect url_for('/models')
 end
 
 get '/predict/?' do 
-	@models = ToxCreateModel.all
+	@models = ToxCreateModel.all(:order => [ :created_at.desc ])
 	@models = @models.collect{|m| m if m.status == 'completed'}.compact
 	haml :predict
 end
@@ -91,6 +97,11 @@ get '/task' do
 end
 
 post '/upload' do # create a new model
+	LOGGER.debug "ENDPOINT '#{params[:endpoint]}'"
+	if params[:endpoint] == ''
+		flash[:notice] = "Please enter an endpoint name."
+		redirect url_for('/create')
+	end
 	unless params[:endpoint] and params[:file] and params[:file][:tempfile]
 		flash[:notice] = "Please enter an endpoint name and upload a CSV file."
 		redirect url_for('/create')
@@ -108,7 +119,7 @@ post '/upload' do # create a new model
 	nr_compounds = 0
 	line_nr = 1
 	params[:file][:tempfile].each_line do |line|
-		unless line.chomp.match(/^.+,.+$/) # check CSV format - not all browsers provide correct content-type
+		unless line.chomp.match(/^.+,.*$/) # check CSV format - not all browsers provide correct content-type
 			flash[:notice] = "Please upload a CSV file created according to these #{link_to "instructions", "csv_format"}."
 			redirect url_for('/create')
 		end
@@ -120,6 +131,7 @@ post '/upload' do # create a new model
 			duplicates[c.inchi] << "Line #{line_nr}: " + line.chomp
 			compound_uri = c.uri
 			compound = dataset.find_or_create_compound(compound_uri)
+			#activity_errors << "Empty activity at line #{line_nr}: " + line.chomp unless items.size == 2 # empty activity value
 			case items[1].to_s
 			when '1'
 				dataset.add(compound,feature,true)
@@ -170,30 +182,22 @@ post '/predict/?' do # post chemical name to model
 	begin
 		@compound = OpenTox::Compound.new(:name => params[:identifier])
 	rescue
-		flash[:notice] = "Could not find a structure for '#{@identifier}'. Please try again."
+		flash[:notice] = "Could not find a structure for '#{URI.encode @identifier}'. Please try again."
 		redirect url_for('/predict')
 	end
 	@predictions = []
 	LOGGER.debug params[:selection].to_yaml
 	params[:selection].keys.each do |id|
 		model = ToxCreateModel.get(id.to_i)
-		unless model.uri
-			model.uri = RestClient.get(File.join(model.task_uri, 'resource')).to_s
-			model.save
-		end
 		LOGGER.debug model.to_yaml
 		prediction = nil
 		confidence = nil
 		title = nil
-<<<<<<< HEAD
 		db_activities = []
-		prediction = RestClient.post model.uri, :compound_uri => @compound.uri#, :accept => "application/x-yaml"
+		#prediction = RestClient.post model.uri, :compound_uri => @compound.uri#, :accept => "application/x-yaml"
+		resource = RestClient::Resource.new(model.uri, :user => @@users[:users].keys[0], :password => @@users[:users].values[0])		
+		prediction = resource.post :compound_uri => @compound.uri#, :accept => "application/x-yaml"
 		redland_model = Redland::Model.new Redland::MemoryStore.new
-=======
-		resource = RestClient::Resource.new(uri, :user => @@users[:users].keys[0], :password => @@users[:users].values[0])		
-		prediction = resource.post :compound_uri => @compound.uri, :accept => "application/x-yaml"
-		model = Redland::Model.new Redland::MemoryStore.new
->>>>>>> micha/test
 		parser = Redland::Parser.new
 		parser.parse_string_into_model(redland_model,prediction,'/')
 		title = model.name
@@ -207,7 +211,7 @@ post '/predict/?' do # post chemical name to model
 		@predictions << {:title => title, :prediction => prediction, :confidence => confidence, :measured_activities => db_activities}
 	end
 
-		LOGGER.debug @predictions.to_yaml
+	LOGGER.debug @predictions.to_yaml
 	haml :prediction
 end
 

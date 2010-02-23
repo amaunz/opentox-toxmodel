@@ -14,13 +14,13 @@
         %a{:href => 'http://lazar.in-silico.de'} lazar
         model
       %label{:for => 'endpoint'} 1. Enter a name for your endpoint:
-      %input{:type => 'text', :name => 'endpoint', :id => 'endpoint'}
+      %input{:type => 'text', :name => 'endpoint', :id => 'endpoint', :size => '50'}
       %br
       %label{:for => 'file'}
         2. Upload training data in
         = link_to "CSV", '/csv_format'
         format:
-      %input{:type => 'file', :name => 'file', :id => 'file'}
+      %input{:type => 'file', :name => 'file', :id => 'file', :size => '41'}
     %input{ :type => "submit", :value => "Create model"}
     = link_to "Cancel", 'create'
 
