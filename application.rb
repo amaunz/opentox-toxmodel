@@ -182,14 +182,14 @@ post '/predict/?' do # post chemical name to model
 	begin
 		@compound = OpenTox::Compound.new(:name => params[:identifier])
 	rescue
-		flash[:notice] = "Could not find a structure for '#{URI.encode @identifier}'. Please try again."
+		flash[:notice] = "Could not find a structure for '#{@identifier}'. Please try again."
 		redirect url_for('/predict')
 	end
 	@predictions = []
-	LOGGER.debug params[:selection].to_yaml
+	#LOGGER.debug params[:selection].to_yaml
 	params[:selection].keys.each do |id|
 		model = ToxCreateModel.get(id.to_i)
-		LOGGER.debug model.to_yaml
+		#LOGGER.debug model.to_yaml
 		prediction = nil
 		confidence = nil
 		title = nil
@@ -197,6 +197,8 @@ post '/predict/?' do # post chemical name to model
 		#prediction = RestClient.post model.uri, :compound_uri => @compound.uri#, :accept => "application/x-yaml"
 		resource = RestClient::Resource.new(model.uri, :user => @@users[:users].keys[0], :password => @@users[:users].values[0])		
 		prediction = resource.post :compound_uri => @compound.uri#, :accept => "application/x-yaml"
+		#LOGGER.debug "Prediction OWL-DL: "
+		#LOGGER.debug prediction
 		redland_model = Redland::Model.new Redland::MemoryStore.new
 		parser = Redland::Parser.new
 		parser.parse_string_into_model(redland_model,prediction,'/')
@@ -204,9 +206,10 @@ post '/predict/?' do # post chemical name to model
 		redland_model.subjects(RDF['type'], OT['FeatureValue']).each do |v|
 			feature = redland_model.object(v,OT['feature'])
 			feature_name = redland_model.object(feature,DC['title']).to_s
+			#LOGGER.debug "DEBUG: #{feature_name}"
 			prediction = redland_model.object(v,OT['value']).to_s if feature_name.match(/classification/)
 			confidence = redland_model.object(v,OT['value']).to_s if feature_name.match(/confidence/)
-			db_activities << redland_model.object(v,OT['value']).to_s if feature_name.match(/#{title}/)
+			db_activities << redland_model.object(v,OT['value']).to_s if feature_name.match(/#{URI.encode title}/)
 		end
 		@predictions << {:title => title, :prediction => prediction, :confidence => confidence, :measured_activities => db_activities}
 	end
