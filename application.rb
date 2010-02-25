@@ -169,6 +169,7 @@ post '/upload' do # create a new model
 		@model.messages +=  duplicate_warnings
 	end
 	@model.save
+	flash[:notice] = "Model creation started. Please be patient - model building may take up to several hours depending on the number and size of the input molecules."
 	redirect url_for('/models')
 
 end
