@@ -1,11 +1,11 @@
-['rubygems', "haml", "sass"].each do |lib|
+['rubygems', "haml", "sass", "rack-flash"].each do |lib|
 	require lib
 end
-require 'rack-flash'
 gem 'opentox-ruby-api-wrapper', '= 1.2.7'
 require 'opentox-ruby-api-wrapper'
 gem 'sinatra-static-assets'
 require 'sinatra/static_assets'
+LOGGER.progname = File.expand_path __FILE__
 
 use Rack::Flash
 set :sessions, true
@@ -97,7 +97,7 @@ get '/task' do
 end
 
 post '/upload' do # create a new model
-	LOGGER.debug "ENDPOINT '#{params[:endpoint]}'"
+	#LOGGER.debug "ENDPOINT '#{params[:endpoint]}'"
 	if params[:endpoint] == ''
 		flash[:notice] = "Please enter an endpoint name."
 		redirect url_for('/create')
@@ -119,11 +119,11 @@ post '/upload' do # create a new model
 	nr_compounds = 0
 	line_nr = 1
 	params[:file][:tempfile].each_line do |line|
-		unless line.chomp.match(/^.+,.*$/) # check CSV format - not all browsers provide correct content-type
+		unless line.chomp.match(/^.+[,;].*$/) # check CSV format - not all browsers provide correct content-type
 			flash[:notice] = "Please upload a CSV file created according to these #{link_to "instructions", "csv_format"}."
 			redirect url_for('/create')
 		end
-		items = line.chomp.split(/\s*,\s*/)
+		items = line.chomp.split(/\s*[,;]\s*/)
 		smiles = items[0]
 		c = OpenTox::Compound.new(:smiles => smiles)
 		if c.inchi != ""
@@ -163,7 +163,7 @@ post '/upload' do # create a new model
 	end
 	duplicate_warnings = ''
 	duplicates.each {|inchi,lines| duplicate_warnings += "<p>#{lines.join('<br/>')}</p>" if lines.size > 1 }
-	LOGGER.debug duplicate_warnings
+	#LOGGER.debug duplicate_warnings
 	unless duplicate_warnings == ''
 		@model.messages += "<p>Duplicated structures (all structures/activities used for model building, please  make sure, that the results were obtained from <em>independent</em> experiments):</p>" 
 		@model.messages +=  duplicate_warnings
