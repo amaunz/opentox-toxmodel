@@ -17,11 +17,16 @@ class ToxCreateModel
 	property :uri, String, :length => 255
 	property :task_uri, String, :length => 255
 	property :validation_task_uri, String, :length => 255
+	property :validation_uri, String, :length => 255
 	property :messages, Text, :length => 2**32-1 
 	property :created_at, DateTime
 
 	def status
 		RestClient.get File.join(self.task_uri, 'status')
+	end
+
+	def validation_status
+		RestClient.get File.join(self.validation_task_uri, 'status')
 	end
 end
 
@@ -50,6 +55,13 @@ get '/models/?' do
 	@models.each do |model|
 		if !model.uri and model.status == "completed"
 			model.uri = RestClient.get(File.join(model.task_uri, 'resource')).to_s
+			model.save
+		end
+		if !model.validation_uri and model.validation_status == "completed"
+			validation_uri = RestClient.get(File.join(model.validation_task_uri, 'resource')).to_s
+			LOGGER.debug "Validation URI: #{validation_uri}"
+			model.validation_uri = RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => validation_uri).to_s
+			LOGGER.debug "Validation Report URI: #{model.validation_uri}"
 			model.save
 		end
 	end
