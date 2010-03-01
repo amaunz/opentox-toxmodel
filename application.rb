@@ -238,6 +238,12 @@ post '/predict/?' do # post chemical name to model
 	haml :prediction
 end
 
+delete '/?' do
+  ToxCreateModel.auto_migrate!
+	response['Content-Type'] = 'text/plain'
+	"All Models deleted."
+end
+
 # SASS stylesheet
 get '/stylesheets/style.css' do
   headers 'Content-Type' => 'text/css; charset=utf-8'
