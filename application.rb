@@ -1,7 +1,7 @@
 ['rubygems', "haml", "sass", "rack-flash"].each do |lib|
 	require lib
 end
-gem 'opentox-ruby-api-wrapper', '= 1.2.7'
+gem 'opentox-ruby-api-wrapper', '= 1.3.0'
 require 'opentox-ruby-api-wrapper'
 gem 'sinatra-static-assets'
 require 'sinatra/static_assets'
@@ -16,6 +16,7 @@ class ToxCreateModel
 	property :name, String, :length => 255
 	property :uri, String, :length => 255
 	property :task_uri, String, :length => 255
+	property :validation_task_uri, String, :length => 255
 	property :messages, Text, :length => 2**32-1 
 	property :created_at, DateTime
 
@@ -97,7 +98,6 @@ get '/task' do
 end
 
 post '/upload' do # create a new model
-	#LOGGER.debug "ENDPOINT '#{params[:endpoint]}'"
 	if params[:endpoint] == ''
 		flash[:notice] = "Please enter an endpoint name."
 		redirect url_for('/create')
@@ -108,7 +108,7 @@ post '/upload' do # create a new model
 	end
 	@model = ToxCreateModel.new
 	@model.name = params[:endpoint]
-	title = URI.encode params[:endpoint]#.gsub(/\s+/,'_')
+	title = URI.encode params[:endpoint]
 	dataset = OpenTox::Dataset.new
 	dataset.title = title
 	feature_uri = url_for("/feature#"+title, :full)
@@ -131,7 +131,6 @@ post '/upload' do # create a new model
 			duplicates[c.inchi] << "Line #{line_nr}: " + line.chomp
 			compound_uri = c.uri
 			compound = dataset.find_or_create_compound(compound_uri)
-			#activity_errors << "Empty activity at line #{line_nr}: " + line.chomp unless items.size == 2 # empty activity value
 			case items[1].to_s
 			when '1'
 				dataset.add(compound,feature,true)
@@ -149,7 +148,15 @@ post '/upload' do # create a new model
 	end
 	dataset_uri = dataset.save 
 	task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :feature_uri => feature_uri)
+	validation_task_uri = OpenTox::Validation.crossvalidation(
+		:algorithm_uri => OpenTox::Algorithm::Lazar.uri,
+		:dataset_uri => dataset_uri,
+		:prediction_feature => feature_uri,
+		:algorithm_params => "feature_generation_uri=#{OpenTox::Algorithm::Fminer.uri}"
+	).uri
+	LOGGER.debug "Validation task: " + validation_task_uri
 	@model.task_uri = task_uri
+	@model.validation_task_uri = validation_task_uri
 
 	@model.messages = "#{nr_compounds} compounds"
 
