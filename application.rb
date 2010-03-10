@@ -124,7 +124,8 @@ post '/upload' do # create a new model
 	dataset = OpenTox::Dataset.new
 	dataset.title = title
 	feature_uri = url_for("/feature#"+title, :full)
-	feature = dataset.find_or_create_feature(feature_uri)
+	dataset.features << feature_uri
+	#feature = dataset.find_or_create_feature(feature_uri)
 	smiles_errors = []
 	activity_errors = []
 	duplicates = {}
@@ -142,13 +143,18 @@ post '/upload' do # create a new model
 			duplicates[c.inchi] = [] unless duplicates[c.inchi]
 			duplicates[c.inchi] << "Line #{line_nr}: " + line.chomp
 			compound_uri = c.uri
-			compound = dataset.find_or_create_compound(compound_uri)
+			#compound = dataset.find_or_create_compound(compound_uri)
+			dataset.compounds << compound_uri
+			dataset.data[compound_uri] = {} unless dataset.data[compound_uri]
+			dataset.data[compound_uri][feature_uri] = [] unless dataset.data[compound_uri][feature_uri]
 			case items[1].to_s
 			when '1'
-				dataset.add(compound,feature,true)
+				dataset.data[compound_uri][feature_uri] << true
+				#dataset.add(compound,feature,true)
 				nr_compounds += 1
 			when '0'
-				dataset.add(compound,feature,false)
+				dataset.data[compound_uri][feature_uri] << false
+				#dataset.add(compound,feature,false)
 				nr_compounds += 1
 			else
 				activity_errors << "Line #{line_nr}: " + line.chomp
