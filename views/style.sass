@@ -19,9 +19,10 @@ body
   color = !text_color
   padding: 1em
   
-  img
-    float: right
-    height: 4em
+  .logo
+    img
+      float: right
+      height: 4em
       
   .index
     clear: both
@@ -123,6 +124,7 @@ body
           height: 100%
 
   dl
+    //display: block
     padding: 1em
     background-color = !bg_color2
     border: 1px solid
@@ -131,8 +133,25 @@ body
       font-weight: bold
       float: left
       clear: left
+      //display: block
     dd
-      //padding-left: 2em
+      clear: right
+      //display: block
+
+      dl
+        //display: block
+        clear: both
+        padding: 1em
+        background-color = !bg_color2
+        border: 0
+        dt
+          white-space: nowrap
+          width: 15em
+          font-weight: bold
+          float: left
+          clear: right
+        dd
+          //padding-left: 2em
 
   .footer
     margin: 0.5em

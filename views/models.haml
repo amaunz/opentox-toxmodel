@@ -12,7 +12,6 @@
   - uri = url_for("/model/#{model.id}", :full)
   %h2
     = model.name
-    -#%button{:onclick => "deletemodel('#{uri}')"} delete
   %dl
     %dt Status:
     %dd
@@ -31,12 +30,21 @@
         %em (model representation in OWL-DL - experts only)
       - else
         %em model under construction
+        = image_tag("/snake_transparent.gif")
     %dt Validation:
     %dd
       - if model.validation_uri
-        %a{:href => model.validation_uri, :accept => "text/html"} Details
+        - uri = File.join(model.validation_uri, 'statistics')
+        - yaml = RestClient.get(uri).to_s
+        - v = YAML.load(yaml)
+        %dl
+          %dt Correct predictions:
+          %dd
+            = v[:classification_statistics][:percent_correct].to_s
+            = '%'
       - else
         %em under construction
+        = image_tag("/snake_transparent.gif")
         =# model.validation_task_uri
       
 

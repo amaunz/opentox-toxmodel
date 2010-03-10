@@ -58,10 +58,10 @@ get '/models/?' do
 			model.save
 		end
 		if !model.validation_uri and model.validation_status == "completed"
-			validation_uri = RestClient.get(File.join(model.validation_task_uri, 'resource')).to_s
-			LOGGER.debug "Validation URI: #{validation_uri}"
-			model.validation_uri = RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => validation_uri).to_s
-			LOGGER.debug "Validation Report URI: #{model.validation_uri}"
+			model.validation_uri = RestClient.get(File.join(model.validation_task_uri, 'resource')).to_s
+			LOGGER.debug "Validation URI: #{model.validation_uri}"
+			#model.validation_uri = RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => validation_uri).to_s
+			#LOGGER.debug "Validation Report URI: #{model.validation_uri}"
 			model.save
 		end
 	end
