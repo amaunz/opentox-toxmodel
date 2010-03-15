@@ -145,15 +145,15 @@ post '/upload' do # create a new model
 			compound_uri = c.uri
 			#compound = dataset.find_or_create_compound(compound_uri)
 			dataset.compounds << compound_uri
-			dataset.data[compound_uri] = {} unless dataset.data[compound_uri]
-			dataset.data[compound_uri][feature_uri] = [] unless dataset.data[compound_uri][feature_uri]
+			dataset.data[compound_uri] = [] unless dataset.data[compound_uri]
+			#dataset.data[compound_uri][feature_uri] = [] unless dataset.data[compound_uri][feature_uri]
 			case items[1].to_s
 			when '1'
-				dataset.data[compound_uri][feature_uri] << true
+				dataset.data[compound_uri] << {feature_uri => true }
 				#dataset.add(compound,feature,true)
 				nr_compounds += 1
 			when '0'
-				dataset.data[compound_uri][feature_uri] << false
+				dataset.data[compound_uri] << {feature_uri => false }
 				#dataset.add(compound,feature,false)
 				nr_compounds += 1
 			else
