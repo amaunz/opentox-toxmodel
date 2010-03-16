@@ -22,11 +22,11 @@ class ToxCreateModel
 	property :created_at, DateTime
 
 	def status
-		RestClient.get File.join(self.task_uri, 'status')
+		RestClient.get(File.join(@task_uri, 'status')).to_s
 	end
 
 	def validation_status
-		RestClient.get File.join(self.validation_task_uri, 'status')
+		RestClient.get File.join(@validation_task_uri, 'status')
 	end
 end
 
@@ -57,12 +57,14 @@ get '/models/?' do
 			model.uri = RestClient.get(File.join(model.task_uri, 'resource')).to_s
 			model.save
 		end
-		if !model.validation_uri and model.validation_status == "completed"
-			model.validation_uri = RestClient.get(File.join(model.validation_task_uri, 'resource')).to_s
-			LOGGER.debug "Validation URI: #{model.validation_uri}"
-			#model.validation_uri = RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => validation_uri).to_s
-			#LOGGER.debug "Validation Report URI: #{model.validation_uri}"
-			model.save
+		unless @@config[:services]["opentox-model"].match(/localhost/)
+			if !model.validation_uri and model.validation_status == "completed"
+				model.validation_uri = RestClient.get(File.join(model.validation_task_uri, 'resource')).to_s
+				LOGGER.debug "Validation URI: #{model.validation_uri}"
+				#model.validation_uri = RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => validation_uri).to_s
+				#LOGGER.debug "Validation Report URI: #{model.validation_uri}"
+				model.save
+			end
 		end
 	end
 	@refresh = true #if @models.collect{|m| m.status}.grep(/started|created/)
@@ -166,15 +168,17 @@ post '/upload' do # create a new model
 	end
 	dataset_uri = dataset.save 
 	task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :feature_uri => feature_uri)
-	validation_task_uri = OpenTox::Validation.crossvalidation(
-		:algorithm_uri => OpenTox::Algorithm::Lazar.uri,
-		:dataset_uri => dataset_uri,
-		:prediction_feature => feature_uri,
-		:algorithm_params => "feature_generation_uri=#{OpenTox::Algorithm::Fminer.uri}"
-	).uri
-	LOGGER.debug "Validation task: " + validation_task_uri
 	@model.task_uri = task_uri
-	@model.validation_task_uri = validation_task_uri
+	unless @@config[:services]["opentox-model"].match(/localhost/)
+		validation_task_uri = OpenTox::Validation.crossvalidation(
+			:algorithm_uri => OpenTox::Algorithm::Lazar.uri,
+			:dataset_uri => dataset_uri,
+			:prediction_feature => feature_uri,
+			:algorithm_params => "feature_generation_uri=#{OpenTox::Algorithm::Fminer.uri}"
+		).uri
+		LOGGER.debug "Validation task: " + validation_task_uri
+		@model.validation_task_uri = validation_task_uri
+	end
 
 	@model.messages = "#{nr_compounds} compounds"
 
@@ -212,35 +216,29 @@ post '/predict/?' do # post chemical name to model
 		redirect url_for('/predict')
 	end
 	@predictions = []
-	#LOGGER.debug params[:selection].to_yaml
 	params[:selection].keys.each do |id|
 		model = ToxCreateModel.get(id.to_i)
-		#LOGGER.debug model.to_yaml
 		prediction = nil
 		confidence = nil
 		title = nil
 		db_activities = []
-		#prediction = RestClient.post model.uri, :compound_uri => @compound.uri#, :accept => "application/x-yaml"
-		resource = RestClient::Resource.new(model.uri, :user => @@users[:users].keys[0], :password => @@users[:users].values[0])		
-		prediction = resource.post :compound_uri => @compound.uri#, :accept => "application/x-yaml"
-		#LOGGER.debug "Prediction OWL-DL: "
-		#LOGGER.debug prediction
-		redland_model = Redland::Model.new Redland::MemoryStore.new
-		parser = Redland::Parser.new
-		parser.parse_string_into_model(redland_model,prediction,'/')
-		title = model.name
-		redland_model.subjects(RDF['type'], OT['FeatureValue']).each do |v|
-			feature = redland_model.object(v,OT['feature'])
-			feature_name = redland_model.object(feature,DC['title']).to_s
-			#LOGGER.debug "DEBUG: #{feature_name}"
-			prediction = redland_model.object(v,OT['value']).to_s if feature_name.match(/classification/)
-			confidence = redland_model.object(v,OT['value']).to_s if feature_name.match(/confidence/)
-			db_activities << redland_model.object(v,OT['value']).to_s if feature_name.match(/#{URI.encode title}/)
+		prediction = YAML.load(`curl -X POST -d 'compound_uri=#{@compound.uri}' -H 'Accept:application/x-yaml' #{model.uri}`)
+		source = prediction.source
+		LOGGER.debug source
+		LOGGER.debug prediction.to_yaml
+		if prediction.data[@compound.uri]
+			if source.to_s.match(/model/)
+				prediction = prediction.data[@compound.uri].first.values.first
+				@predictions << {:title => model.name, :prediction => prediction[:classification], :confidence => prediction[:confidence]}
+			else
+				prediction = prediction.data[@compound.uri].first.values
+				@predictions << {:title => model.name, :measured_activities => prediction}
+			end
+		else
+			@predictions << {:title => model.name, :prediction => "not available (no similar compounds in the training dataset)"}
 		end
-		@predictions << {:title => title, :prediction => prediction, :confidence => confidence, :measured_activities => db_activities}
 	end
 
-	LOGGER.debug @predictions.to_yaml
 	haml :prediction
 end
 
