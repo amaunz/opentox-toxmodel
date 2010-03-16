@@ -23,11 +23,12 @@
     %dd= model.created_at
     %dt Details:
     %dd= model.messages
-    %dt URI:
+    %dt Download:
     %dd
       - if model.uri
-        %a{:href => model.uri, :accept => "application/rdf+xml"} #{model.uri}
-        %em (model representation in OWL-DL - experts only)
+        -# %a{:href => model.uri, :accept => "application/x-yaml"} yaml
+        %a{:href => model.uri, :accept => "application/rdf+xml"} OWL-DL model representation
+        %em  (experts only)
       - else
         %em model under construction
         = image_tag("/snake_transparent.gif")
