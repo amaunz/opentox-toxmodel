@@ -1,7 +1,7 @@
 ['rubygems', "haml", "sass", "rack-flash"].each do |lib|
 	require lib
 end
-gem 'opentox-ruby-api-wrapper', '= 1.3.1'
+gem 'opentox-ruby-api-wrapper', '= 1.4.0'
 require 'opentox-ruby-api-wrapper'
 gem 'sinatra-static-assets'
 require 'sinatra/static_assets'
