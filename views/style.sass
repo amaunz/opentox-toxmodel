@@ -18,12 +18,28 @@ body
   background-color = !body_color
   color = !text_color
   padding: 1em
-  
-  .logo
-    img
-      float: right
-      height: 4em
       
+  .headline
+      
+    logo
+      top: 1%
+      float: right
+      display: inline      
+      font-family: arial
+      font-size: 2.5em
+      word-spacing: -2px
+            
+      span1               
+        color: black
+        font-weight: bolder
+        letter-spacing: -3px
+        
+      span2 
+        color: #5D308A
+        font-weight: 500
+        position: relative
+        left: -6px
+
   .index
     clear: both
 
@@ -129,10 +145,10 @@ body
     background-color = !bg_color2
     border: 1px solid
     dt
-      width: 10em
+      width: 15em
       font-weight: bold
       float: left
-      clear: left
+      clear: both
       //display: block
     dd
       clear: right
@@ -156,8 +172,6 @@ body
   .footer
     margin: 0.5em
     padding: 0.5em
-    img
-      height: 24px
 
 .active
   color: red

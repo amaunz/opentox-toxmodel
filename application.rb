@@ -18,7 +18,9 @@ class ToxCreateModel
 	property :task_uri, String, :length => 255
 	property :validation_task_uri, String, :length => 255
 	property :validation_uri, String, :length => 255
-	property :messages, Text, :length => 2**32-1 
+	property :validation_report_uri, String, :length => 255
+	property :warnings, Text, :length => 2**32-1 
+	property :nr_compounds, Integer
 	property :created_at, DateTime
 
 	def status
@@ -28,6 +30,19 @@ class ToxCreateModel
 	def validation_status
 		RestClient.get File.join(@validation_task_uri, 'status')
 	end
+
+	def algorithm
+		RestClient.get File.join(@uri, 'algorithm')
+	end
+
+	def training_dataset
+		RestClient.get File.join(@uri, 'training_dataset')
+	end
+
+	def feature_dataset
+		RestClient.get File.join(@uri, 'feature_dataset')
+	end
+
 end
 
 DataMapper.auto_upgrade!
@@ -61,8 +76,8 @@ get '/models/?' do
 			if !model.validation_uri and model.validation_status == "completed"
 				model.validation_uri = RestClient.get(File.join(model.validation_task_uri, 'resource')).to_s
 				LOGGER.debug "Validation URI: #{model.validation_uri}"
-				#model.validation_uri = RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => validation_uri).to_s
-				#LOGGER.debug "Validation Report URI: #{model.validation_uri}"
+				model.validation_report_uri = RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => validation_uri).to_s
+				LOGGER.debug "Validation Report URI: #{model.validation_report_uri}"
 				model.save
 			end
 		end
@@ -175,22 +190,22 @@ post '/upload' do # create a new model
 		@model.validation_task_uri = validation_task_uri
 	end
 
-	@model.messages = "#{nr_compounds} compounds"
+	@model.nr_compounds = nr_compounds
 
 	if smiles_errors.size > 0
-		@model.messages += "<p>Incorrect Smiles structures (ignored):</p>"
-		@model.messages += smiles_errors.join("<br/>")
+		@model.warnings += "<p>Incorrect Smiles structures (ignored):</p>"
+		@model.warnings += smiles_errors.join("<br/>")
 	end
 	if activity_errors.size > 0
-		@model.messages += "<p>Irregular activities (ignored - please use 1 for active and 0 for inactive compounds):</p>"
-		@model.messages += activity_errors.join("<br/>")
+		@model.warnings += "<p>Irregular activities (ignored - please use 1 for active and 0 for inactive compounds):</p>"
+		@model.warnings += activity_errors.join("<br/>")
 	end
 	duplicate_warnings = ''
 	duplicates.each {|inchi,lines| duplicate_warnings += "<p>#{lines.join('<br/>')}</p>" if lines.size > 1 }
 	#LOGGER.debug duplicate_warnings
 	unless duplicate_warnings == ''
-		@model.messages += "<p>Duplicated structures (all structures/activities used for model building, please  make sure, that the results were obtained from <em>independent</em> experiments):</p>" 
-		@model.messages +=  duplicate_warnings
+		@model.warnings += "<p>Duplicated structures (all structures/activities used for model building, please  make sure, that the results were obtained from <em>independent</em> experiments):</p>" 
+		@model.warnings +=  duplicate_warnings
 	end
 	@model.save
 	flash[:notice] = "Model creation started. Please be patient - model building may take up to several hours depending on the number and size of the input molecules."

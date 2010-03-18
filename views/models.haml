@@ -15,37 +15,61 @@
   %dl
     %dt Status:
     %dd
+      = image_tag("/snake_transparent.gif") if model.status.match(/started|created/)
       = model.status
       (
       %a{:href => url_for("/model/#{model.id}/delete"), :onclick => 'return confirm("Are you sure?");'} delete
       )
     %dt Started:
     %dd= model.created_at
-    %dt Details:
-    %dd= model.messages
-    %dt Download:
-    %dd
-      - if model.uri
+    %dt Training compounds:
+    %dd= model.nr_compounds
+    %dt Warnings:
+    - if model.warnings
+      %dd= model.warnings
+    - else
+      %dd -
+
+    - if model.status == 'completed'
+      %dt Algorithm:
+      %dd
+        %a{:href => model.algorithm} #{File.basename model.algorithm}
+      %dt Descriptors:
+      %dd
+        %a{:href => 'http://www.maunz.de/libfminer2-bbrc-doc/'} Fminer backbone refinement classes
+      %dt Training dataset:
+      %dd
+        %a{:href => "#{model.training_dataset}.rdf"} RDF/XML
+        ,
+        %a{:href => "#{model.training_dataset}.yaml"} YAML
+        %em  (more formats to be added)
+      %dt Feature dataset:
+      %dd
+        %a{:href => "#{model.feature_dataset}.rdf"} RDF/XML
+        ,
+        %a{:href => "#{model.feature_dataset}.yaml"} YAML
+        %em  (more formats to be added)
+      %dt Model:
+      %dd
         -# %a{:href => model.uri, :accept => "application/x-yaml"} yaml
-        %a{:href => model.uri, :accept => "application/rdf+xml"} OWL-DL model representation
-        %em  (experts only)
-      - else
-        %em model under construction
-        = image_tag("/snake_transparent.gif")
-    %dt Validation:
-    %dd
-      - if model.validation_uri
-        - uri = File.join(model.validation_uri, 'statistics')
-        - yaml = RestClient.get(uri).to_s
-        - v = YAML.load(yaml)
-        %dl
-          %dt Correct predictions:
-          %dd
-            = v[:classification_statistics][:percent_correct].to_s
-            = '%'
-      - else
-        %em under construction
-        = image_tag("/snake_transparent.gif")
-        =# model.validation_task_uri
+        %a{:href => "#{model.uri}.rdf"} RDF/XML
+        ,
+        %a{:href => "#{model.uri}.yaml"} YAML
+        %em  (more formats to be added)
+      %dt Validation:
+      %dd
+        - if model.validation_uri
+          - uri = File.join(model.validation_uri, 'statistics')
+          - yaml = RestClient.get(uri).to_s
+          - v = YAML.load(yaml)
+          %dl
+            %dt Correct predictions:
+            %dd
+              = v[:classification_statistics][:percent_correct].to_s
+              = '%'
+        - else
+          %em under construction
+          = image_tag("/snake_transparent.gif")
+          =# model.validation_task_uri
       
 

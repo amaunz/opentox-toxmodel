@@ -9,7 +9,11 @@
     %link{:rel=>'stylesheet', :href=>'stylesheets/style.css', :type => "text/css"}      
 
   %body
-    .logo= image_tag "/ToxCreate_rgb_72.png", :alt => 'ToxCreate'
+    -# .logo= image_tag "/ToxCreate_rgb_72.png", :alt => 'ToxCreate'
+    .headline
+      %logo
+        %span1="Tox" 
+        %span2="Create"
          
     .index
       %ul
@@ -38,5 +42,6 @@
     .footer
       &copy;
       %a{:href => 'http://www.in-silico.ch'} in silico toxicology
+      -#%a{:href => 'http://www.opentox.org'} OpenTox
       2009-2010, powered by
-      %a{:href => 'http://www.opentox.org'} OpenTox
+      %a{:href => 'http://www.opentox.org'} <span style="color:#5D308A;letter-spacing:-1px;">Open</span><span style="color:#000;font-family:arial;font-weight:bold;letter-spacing:-1px;position:relative;">Tox</span>
