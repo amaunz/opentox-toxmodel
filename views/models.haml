@@ -25,10 +25,10 @@
     %dt Training compounds:
     %dd= model.nr_compounds
     %dt Warnings:
-    - if model.warnings
-      %dd= model.warnings
-    - else
+    - if model.warnings == ''
       %dd -
+    - else
+      %dd= model.warnings
 
     - if model.status == 'completed'
       %dt Algorithm:
@@ -58,7 +58,8 @@
         %em  (more formats to be added)
       %dt Validation:
       %dd
-        - if model.validation_uri
+        %em temporarily disabled
+        -# if model.validation_uri
           - uri = File.join(model.validation_uri, 'statistics')
           - yaml = RestClient.get(uri).to_s
           - v = YAML.load(yaml)
@@ -67,7 +68,7 @@
             %dd
               = v[:classification_statistics][:percent_correct].to_s
               = '%'
-        - else
+        -# else
           %em under construction
           = image_tag("/snake_transparent.gif")
           =# model.validation_task_uri
