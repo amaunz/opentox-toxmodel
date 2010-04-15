@@ -17,7 +17,7 @@
          
     .index
       %ul
-        %li{:class => ("selected" if /create/ =~ request.path )}
+        %li{:class => ("selected" if /\/create/ =~ request.path )}
           = link_to "Create", "/create"
         %li{:class => ("selected" if /models/ =~ request.path )}
           = link_to "Inspect", "/models"

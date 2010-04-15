@@ -24,23 +24,23 @@ class ToxCreateModel
 	property :created_at, DateTime
 
 	def status
-		RestClient.get(File.join(@task_uri, 'status')).to_s
+		RestClient.get(File.join(@task_uri, 'status')).body
 	end
 
 	def validation_status
-		RestClient.get File.join(@validation_task_uri, 'status')
+		RestClient.get(File.join(@validation_task_uri, 'status')).body
 	end
 
 	def algorithm
-		RestClient.get File.join(@uri, 'algorithm')
+		RestClient.get(File.join(@uri, 'algorithm')).body
 	end
 
 	def training_dataset
-		RestClient.get File.join(@uri, 'training_dataset')
+		RestClient.get(File.join(@uri, 'training_dataset')).body
 	end
 
 	def feature_dataset
-		RestClient.get File.join(@uri, 'feature_dataset')
+		RestClient.get(File.join(@uri, 'feature_dataset')).body
 	end
 
 end
