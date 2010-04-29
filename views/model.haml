@@ -1,0 +1,77 @@
+- uri = url_for("/model/#{model.id}", :full)
+- js = "$('#delete_#{model.id}').deleteModel('DELETE', {elem: '#model_#{model.id}'});\n  " + "$('#show_model_#{model.id}_warnings').toggleWarnings('#{model.id}');"
+:javascript
+  $(function() {
+    #{js}
+  });
+  
+%div{:id => "model_#{model.id}"}  
+  %h2
+    = model.name
+  %dl
+    %dt Status:
+    %dd
+      %span{:id => "model_#{model.id}_status", :class => model.status}
+        = haml :model_status, :locals=>{:model=>model}, :layout => false 
+      (
+      %a{:href => url_for("/model/#{model.id}/delete"), :id => "delete_#{model.id}", :class => 'delete'} delete
+      )
+    %dt Started:
+    %dd= model.created_at
+    %dt Training compounds:
+    %dd= model.nr_compounds
+    %dt Warnings:
+    - if model.warnings == ''
+      %dd -
+    - else
+      %a{:href => "#", :id => "show_model_#{model.id}_warnings"} show
+      %dd{:id => "model_#{model.id}_warnings", :style => "display: none;"}= model.warnings
+
+    - if model.status == 'completed'
+      %dt Algorithm:
+      %dd
+        - begin
+          %a{:href => model.algorithm} #{File.basename model.algorithm}
+        - rescue
+          %b -
+    
+      %dt Descriptors:
+      %dd
+        %a{:href => 'http://www.maunz.de/libfminer2-bbrc-doc/'} Fminer backbone refinement classes
+      %dt Training dataset:
+      %dd
+        %a{:href => "#{model.training_dataset}.rdf"} RDF/XML
+        ,
+        %a{:href => "#{model.training_dataset}.yaml"} YAML
+        ,
+        %a{:href => "#{model.training_dataset}.html"} HTML
+        %em  (more formats to be added)
+      %dt Feature dataset:
+      %dd
+        %a{:href => "#{model.feature_dataset}.rdf"} RDF/XML
+        ,
+        %a{:href => "#{model.feature_dataset}.yaml"} YAML
+        %em  (more formats to be added)
+      %dt Model:
+      %dd
+        -# %a{:href => model.uri, :accept => "application/x-yaml"} yaml
+        %a{:href => "#{model.uri}.rdf"} RDF/XML
+        ,
+        %a{:href => "#{model.uri}.yaml"} YAML
+        %em  (more formats to be added)
+      %dt Validation:
+      %dd
+        %em temporarily disabled
+        -# if model.validation_uri
+          - uri = File.join(model.validation_uri, 'statistics')
+          - yaml = RestClient.get(uri).to_s
+          - v = YAML.load(yaml)
+          %dl
+            %dt Correct predictions:
+            %dd
+              = v[:classification_statistics][:percent_correct].to_s
+              = '%'
+        -# else
+          %em under construction
+          = image_tag("/snake_transparent.gif")
+          =# model.validation_task_uri

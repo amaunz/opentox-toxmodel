@@ -4,8 +4,10 @@
   %head
     %meta{'http-equiv' => 'Content-Type', :content => 'text/html'}
     - if @refresh
-      %meta{'http-equiv' => "refresh", :content => "15"}
+      - # %meta{'http-equiv' => "refresh", :content => "15"}
     %title ToxCreate
+    %script{:type => "text/javascript", :src  => "javascripts/jquery.js"}
+    %script{:type => "text/javascript", :src  => "javascripts/toxcreate.js"}
     %link{:rel=>'stylesheet', :href=>'stylesheets/style.css', :type => "text/css"}      
 
   %body
@@ -34,7 +36,7 @@
 
       - if flash[:notice]
         %p
-        .notice
+        .notice#flashnotice
           = flash[:notice]
 
       = yield

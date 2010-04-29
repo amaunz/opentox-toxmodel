@@ -88,7 +88,7 @@ get '/models/?' do
 	haml :models
 end
 
-get '/model/:id/delete/?' do
+delete '/model/:id/delete/?' do
 	model = ToxCreateModel.get(params[:id])
 	begin
 		RestClient.delete model.uri if model.uri
@@ -99,6 +99,45 @@ get '/model/:id/delete/?' do
 	flash[:notice] = "#{model.name} model deleted."
 	redirect url_for('/models')
 end
+
+get '/model/:id/status/?' do
+  response['Content-Type'] = 'text/plain'
+	model = ToxCreateModel.get(params[:id])
+	begin
+		haml :model_status, :locals=>{:model=>model}, :layout => false
+	rescue
+    
+	end
+end
+
+get '/model/:id/?' do
+  response['Content-Type'] = 'text/plain'
+	model = ToxCreateModel.get(params[:id])
+  if !model.uri and model.status == "completed"
+	  model.uri = RestClient.get(File.join(model.task_uri, 'resource')).to_s
+		model.save
+	end
+=begin
+		unless @@config[:services]["opentox-model"].match(/localhost/)
+			if !model.validation_uri and model.validation_status == "completed"
+				model.validation_uri = RestClient.get(File.join(model.validation_task_uri, 'resource')).to_s
+				LOGGER.debug "Validation URI: #{model.validation_uri}"
+				model.validation_report_uri = RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => validation_uri).to_s
+				LOGGER.debug "Validation Report URI: #{model.validation_report_uri}"
+				model.save
+			end
+		end
+=end
+
+	@refresh = true #if @models.collect{|m| m.status}.grep(/started|created/)
+
+  begin
+		haml :model, :locals=>{:model=>model}, :layout => false
+	rescue
+    return "unable to renderd model"
+	end
+end
+
 
 get '/predict/?' do 
 	@models = ToxCreateModel.all(:order => [ :created_at.desc ])

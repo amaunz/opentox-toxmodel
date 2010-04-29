@@ -1,76 +1,12 @@
--# :javascript
-  function deletemodel(uri) {
-    var xmlhttp;
-    return confirm("Are you sure?");
-    xmlhttp=new XMLHttpRequest();
-    xmlhttp.open('DELETE',uri,false)
-    xmlhttp.send(null);
-  }
+- stati = @models.map{|m| "#{m.id}" if m.status != "completed"}.compact
+- stati_to_check = stati.length > 0 ? stati.join(", ") : stati = 0 
+:javascript
+  $(function() {
+    if(#{stati != 0}) { 
+      setTimeout('checkStati("#{stati_to_check}")',1500);
+    }
+  });
 
 %p Get an overview about ToxCreate models. This page is refreshed every 15 seconds to update the model status.
 - @models.each do |model|
-  - uri = url_for("/model/#{model.id}", :full)
-  %h2
-    = model.name
-  %dl
-    %dt Status:
-    %dd
-      = image_tag("/snake_transparent.gif") if model.status.match(/started|created/)
-      = model.status
-      (
-      %a{:href => url_for("/model/#{model.id}/delete"), :onclick => 'return confirm("Are you sure?");'} delete
-      )
-    %dt Started:
-    %dd= model.created_at
-    %dt Training compounds:
-    %dd= model.nr_compounds
-    %dt Warnings:
-    - if model.warnings == ''
-      %dd -
-    - else
-      %dd= model.warnings
-
-    - if model.status == 'completed'
-      %dt Algorithm:
-      %dd
-        %a{:href => model.algorithm} #{File.basename model.algorithm}
-      %dt Descriptors:
-      %dd
-        %a{:href => 'http://www.maunz.de/libfminer2-bbrc-doc/'} Fminer backbone refinement classes
-      %dt Training dataset:
-      %dd
-        %a{:href => "#{model.training_dataset}.rdf"} RDF/XML
-        ,
-        %a{:href => "#{model.training_dataset}.yaml"} YAML
-        %em  (more formats to be added)
-      %dt Feature dataset:
-      %dd
-        %a{:href => "#{model.feature_dataset}.rdf"} RDF/XML
-        ,
-        %a{:href => "#{model.feature_dataset}.yaml"} YAML
-        %em  (more formats to be added)
-      %dt Model:
-      %dd
-        -# %a{:href => model.uri, :accept => "application/x-yaml"} yaml
-        %a{:href => "#{model.uri}.rdf"} RDF/XML
-        ,
-        %a{:href => "#{model.uri}.yaml"} YAML
-        %em  (more formats to be added)
-      %dt Validation:
-      %dd
-        %em temporarily disabled
-        -# if model.validation_uri
-          - uri = File.join(model.validation_uri, 'statistics')
-          - yaml = RestClient.get(uri).to_s
-          - v = YAML.load(yaml)
-          %dl
-            %dt Correct predictions:
-            %dd
-              = v[:classification_statistics][:percent_correct].to_s
-              = '%'
-        -# else
-          %em under construction
-          = image_tag("/snake_transparent.gif")
-          =# model.validation_task_uri
-      
-
+  = haml :model, :locals=>{:model=>model}, :layout => false 
