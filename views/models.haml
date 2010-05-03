@@ -58,8 +58,8 @@
         %em  (more formats to be added)
       %dt Validation:
       %dd
-        %em temporarily disabled
-        -# if model.validation_uri
+        -# %em temporarily disabled
+        - if model.validation_uri
           - uri = File.join(model.validation_uri, 'statistics')
           - yaml = RestClient.get(uri).to_s
           - v = YAML.load(yaml)
@@ -68,9 +68,9 @@
             %dd
               = v[:classification_statistics][:percent_correct].to_s
               = '%'
-        -# else
+        - else
           %em under construction
           = image_tag("/snake_transparent.gif")
-          =# model.validation_task_uri
+          = model.validation_task_uri
       
 
