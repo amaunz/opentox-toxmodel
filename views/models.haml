@@ -15,7 +15,7 @@
   %dl
     %dt Status:
     %dd
-      = image_tag("/snake_transparent.gif") if model.status.match(/started|created/)
+      = image_tag("/snake_transparent.gif") if model.status.match(/running|started|created/i)
       = model.status
       (
       %a{:href => url_for("/model/#{model.id}/delete"), :onclick => 'return confirm("Are you sure?");'} delete
@@ -30,7 +30,7 @@
     - else
       %dd= model.warnings
 
-    - if model.status == 'completed'
+    - if model.status == 'Completed'
       %dt Algorithm:
       %dd
         %a{:href => model.algorithm} #{File.basename model.algorithm}
@@ -51,14 +51,12 @@
         %em  (more formats to be added)
       %dt Model:
       %dd
-        -# %a{:href => model.uri, :accept => "application/x-yaml"} yaml
         %a{:href => "#{model.uri}.rdf"} RDF/XML
         ,
         %a{:href => "#{model.uri}.yaml"} YAML
         %em  (more formats to be added)
       %dt Validation:
       %dd
-        -# %em temporarily disabled
         - if model.validation_uri
           - uri = File.join(model.validation_uri, 'statistics')
           - yaml = RestClient.get(uri).to_s
@@ -69,8 +67,7 @@
               = v[:classification_statistics][:percent_correct].to_s
               = '%'
         - else
-          %em under construction
-          = image_tag("/snake_transparent.gif")
-          = model.validation_task_uri
+          = image_tag("/snake_transparent.gif") if model.validation_status == "Running"
+          = model.validation_status
       
 

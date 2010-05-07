@@ -24,11 +24,11 @@ class ToxCreateModel
 	property :created_at, DateTime
 
 	def status
-		RestClient.get(File.join(@task_uri, 'status')).body
+		RestClient.get(File.join(@task_uri, 'hasStatus')).body
 	end
 
 	def validation_status
-		#RestClient.get(File.join(@validation_task_uri, 'status')).body
+		RestClient.get(File.join(@validation_task_uri, 'hasStatus')).body
 	end
 
 	def algorithm
@@ -36,7 +36,7 @@ class ToxCreateModel
 	end
 
 	def training_dataset
-		RestClient.get(File.join(@uri, 'training_dataset')).body
+		RestClient.get(File.join(@uri, 'trainingDataset')).body
 	end
 
 	def feature_dataset
@@ -68,13 +68,13 @@ end
 get '/models/?' do
 	@models = ToxCreateModel.all(:order => [ :created_at.desc ])
 	@models.each do |model|
-		if !model.uri and model.status == "completed"
-			model.uri = RestClient.get(File.join(model.task_uri, 'resource')).to_s
+		if !model.uri and model.status == "Completed"
+			model.uri = RestClient.get(File.join(model.task_uri, 'resultURI')).body.to_s
 			model.save
 		end
 		unless @@config[:services]["opentox-model"].match(/localhost/)
-			if !model.validation_uri and model.validation_status == "completed"
-				model.validation_uri = RestClient.get(File.join(model.validation_task_uri, 'resource')).to_s
+			if !model.validation_uri and model.validation_status == "Completed"
+				model.validation_uri = RestClient.get(File.join(model.validation_task_uri, 'resultURI')).body.to_s
 				LOGGER.debug "Validation URI: #{model.validation_uri}"
 				model.validation_report_uri = RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => validation_uri).to_s
 				LOGGER.debug "Validation Report URI: #{model.validation_report_uri}"
@@ -100,7 +100,7 @@ end
 
 get '/predict/?' do 
 	@models = ToxCreateModel.all(:order => [ :created_at.desc ])
-	@models = @models.collect{|m| m if m.status == 'completed'}.compact
+	@models = @models.collect{|m| m if m.status == 'Completed'}.compact
 	haml :predict
 end
 
@@ -137,10 +137,9 @@ post '/upload' do # create a new model
 	end
 	@model = ToxCreateModel.new
 	@model.name = params[:endpoint]
-	title = URI.encode params[:endpoint]
 	dataset = OpenTox::Dataset.new
-	dataset.title = title
-	feature_uri = url_for("/feature#"+title, :full)
+	dataset.title = params[:endpoint]
+	feature_uri = url_for("/feature#"+URI.encode(params[:endpoint]), :full)
 	dataset.features << feature_uri
 	smiles_errors = []
 	activity_errors = []
@@ -177,7 +176,7 @@ post '/upload' do # create a new model
 		line_nr += 1
 	end
 	dataset_uri = dataset.save 
-	task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :feature_uri => feature_uri)
+	task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :prediction_feature => feature_uri)
 	@model.task_uri = task_uri
 
 	unless @@config[:services]["opentox-model"].match(/localhost/)
@@ -204,7 +203,6 @@ post '/upload' do # create a new model
 	end
 	duplicate_warnings = ''
 	duplicates.each {|inchi,lines| duplicate_warnings += "<p>#{lines.join('<br/>')}</p>" if lines.size > 1 }
-	#LOGGER.debug duplicate_warnings
 	unless duplicate_warnings == ''
 		@model.warnings += "<p>Duplicated structures (all structures/activities used for model building, please  make sure, that the results were obtained from <em>independent</em> experiments):</p>" 
 		@model.warnings +=  duplicate_warnings
@@ -234,10 +232,13 @@ post '/predict/?' do # post chemical name to model
 		confidence = nil
 		title = nil
 		db_activities = []
+		LOGGER.debug model.inspect
+		#LOGGER.debug "curl -X POST -d 'compound_uri=#{@compound.uri}' -H 'Accept:application/x-yaml' #{model.uri}"
 		prediction = YAML.load(`curl -X POST -d 'compound_uri=#{@compound.uri}' -H 'Accept:application/x-yaml' #{model.uri}`)
-		source = prediction.source
-		LOGGER.debug source
-		LOGGER.debug prediction.to_yaml
+		#LOGGER.debug prediction.inspect
+		source = prediction.creator
+		#LOGGER.debug source
+		#LOGGER.debug prediction.to_yaml
 		if prediction.data[@compound.uri]
 			if source.to_s.match(/model/)
 				prediction = prediction.data[@compound.uri].first.values.first
