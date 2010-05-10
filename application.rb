@@ -18,6 +18,7 @@ class ToxCreateModel
 	property :task_uri, String, :length => 255
 	property :validation_task_uri, String, :length => 255
 	property :validation_uri, String, :length => 255
+	property :validation_report_task_uri, String, :length => 255
 	property :validation_report_uri, String, :length => 255
 	property :warnings, Text, :length => 2**32-1 
 	property :nr_compounds, Integer
@@ -29,6 +30,10 @@ class ToxCreateModel
 
 	def validation_status
 		RestClient.get(File.join(@validation_task_uri, 'hasStatus')).body
+	end
+
+	def validation_report_status
+		RestClient.get(File.join(@validation_report_task_uri, 'hasStatus')).body
 	end
 
 	def algorithm
@@ -74,11 +79,14 @@ get '/models/?' do
 		end
 		unless @@config[:services]["opentox-model"].match(/localhost/)
 			if !model.validation_uri and model.validation_status == "Completed"
-				model.validation_uri = RestClient.get(File.join(model.validation_task_uri, 'resultURI')).body.to_s
+				model.validation_uri = RestClient.get(File.join(model.validation_task_uri, 'resultURI')).body
 				LOGGER.debug "Validation URI: #{model.validation_uri}"
-				model.validation_report_uri = RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => validation_uri).to_s
-				LOGGER.debug "Validation Report URI: #{model.validation_report_uri}"
+				model.validation_report_task_uri = RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => model.validation_uri).body
+				LOGGER.debug "Validation Report Task URI: #{model.validation_report_task_uri}"
 				model.save
+			end
+			if model.validation_report_task_uri and !model.validation_report_uri and model.validation_report_status == 'Completed'
+				model.validation_report_uri = RestClient.get(File.join(model.validation_report_task_uri, 'resultURI')).body
 			end
 		end
 	end
@@ -186,7 +194,7 @@ post '/upload' do # create a new model
 			:prediction_feature => feature_uri,
 			:algorithm_params => "feature_generation_uri=#{OpenTox::Algorithm::Fminer.uri}"
 		).uri
-		LOGGER.debug "Validation task: " + validation_task_uri
+		#LOGGER.debug "Validation task: " + validation_task_uri
 		@model.validation_task_uri = validation_task_uri
 	end
 

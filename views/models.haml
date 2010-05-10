@@ -55,17 +55,76 @@
         ,
         %a{:href => "#{model.uri}.yaml"} YAML
         %em  (more formats to be added)
-      %dt Validation:
+      %dt
+        Validation:
+        - if model.validation_report_uri
+          %a{:href => model.validation_report_uri, :target => "_blank"} (more details)
       %dd
         - if model.validation_uri
           - uri = File.join(model.validation_uri, 'statistics')
-          - yaml = RestClient.get(uri).to_s
+          - yaml = RestClient.get(uri).body
           - v = YAML.load(yaml)
+          - tp=0; tn=0; fp=0; fn=0; n=0
+          - v[:classification_statistics][:confusion_matrix][:confusion_matrix_cell].each do |cell|
+            - if cell[:confusion_matrix_predicted] == "true" and cell[:confusion_matrix_actual] == "true"
+              - tp = cell[:confusion_matrix_value]
+              - n += tp
+            - elsif cell[:confusion_matrix_predicted] == "false" and cell[:confusion_matrix_actual] == "false"
+              - tn = cell[:confusion_matrix_value]
+              - n += tn
+            - elsif cell[:confusion_matrix_predicted] == "false" and cell[:confusion_matrix_actual] == "true"
+              - fn = cell[:confusion_matrix_value]
+              - n += fn
+            - elsif cell[:confusion_matrix_predicted] == "true" and cell[:confusion_matrix_actual] == "false"
+              - fp = cell[:confusion_matrix_value]
+              - n += fp
+
+
+          -#%pre
+            = yaml
           %dl
+            %dt Number of predictions:
+            %dd= n
             %dt Correct predictions:
             %dd
-              = v[:classification_statistics][:percent_correct].to_s
+              =# sprintf("%.2f", v[:classification_statistics][:percent_correct].to_f)
+              = sprintf("%.2f", 100*(tp+tn).to_f/n)
               = '%'
+            %dt
+              %a{:href => "http://en.wikipedia.org/wiki/Receiver_operating_characteristic", :target => "_blank"} Weighted area under ROC:
+            %dd 
+              = sprintf("%.3f", v[:classification_statistics][:weighted_area_under_roc].to_f)
+            %dt
+              %a{:href => "http://en.wikipedia.org/wiki/Sensitivity_and_specificity", :target => "_blank"} Specificity:
+            %dd= sprintf("%.3f", tn.to_f/(tn+fp))
+            %dt
+              %a{:href => "http://en.wikipedia.org/wiki/Sensitivity_and_specificity", :target => "_blank"} Sensitivity:
+            %dd= sprintf("%.3f", tp.to_f/(tp+fn))
+            -# %dd
+
+            -# %dt Precision:
+            -# %dd 
+              = v[:classification_statistics][:class_value_statistics][0][:precision].to_s
+              = '%'
+            %dt
+              %a{:href => "http://en.wikipedia.org/wiki/Confusion_matrix", :target => "_blank"} Confusion Matrix:
+            %dd
+              %table
+                %tr
+                  %th
+                  %th Measured
+                %tr
+                  %th Predicted
+                  %th active
+                  %th inactive
+                %tr
+                  %th active
+                  %td= tp
+                  %td= fp
+                %tr
+                  %th inactive
+                  %td= fn
+                  %td= tn
         - else
           = image_tag("/snake_transparent.gif") if model.validation_status == "Running"
           = model.validation_status
