@@ -28,7 +28,7 @@ class ToxCreateModel
 	end
 
 	def validation_status
-		RestClient.get(File.join(@validation_task_uri, 'status')).body
+		#RestClient.get(File.join(@validation_task_uri, 'status')).body
 	end
 
 	def algorithm
@@ -72,7 +72,6 @@ get '/models/?' do
 			model.uri = RestClient.get(File.join(model.task_uri, 'resource')).to_s
 			model.save
 		end
-=begin
 		unless @@config[:services]["opentox-model"].match(/localhost/)
 			if !model.validation_uri and model.validation_status == "completed"
 				model.validation_uri = RestClient.get(File.join(model.validation_task_uri, 'resource')).to_s
@@ -82,7 +81,6 @@ get '/models/?' do
 				model.save
 			end
 		end
-=end
 	end
 	@refresh = true #if @models.collect{|m| m.status}.grep(/started|created/)
 	haml :models
@@ -221,7 +219,6 @@ post '/upload' do # create a new model
 	task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :feature_uri => feature_uri)
 	@model.task_uri = task_uri
 
-=begin
 	unless @@config[:services]["opentox-model"].match(/localhost/)
 		validation_task_uri = OpenTox::Validation.crossvalidation(
 			:algorithm_uri => OpenTox::Algorithm::Lazar.uri,
@@ -232,7 +229,6 @@ post '/upload' do # create a new model
 		LOGGER.debug "Validation task: " + validation_task_uri
 		@model.validation_task_uri = validation_task_uri
 	end
-=end
 
 	@model.nr_compounds = nr_compounds
 	@model.warnings = ''
