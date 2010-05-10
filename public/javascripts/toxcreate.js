@@ -48,7 +48,8 @@ $(function() {
         }        
       },
       error: function(data) {
-        alert("status check error");
+        //alert("status check error");
+        id = -1;
       }
     });
     return id;
@@ -66,9 +67,7 @@ $(function() {
         '_method': 'get'
       },
       success: function(data) {
-        $("div#model_" + id).animate({"opacity": "0.1"},1000).delay(100);
         $("div#model_" + id).html(data);
-        $("div#model_" + id).animate({"opacity": "1"},1000).delay(100);
       },
       error: function(data) {
         alert("loadModel error");
@@ -108,5 +107,3 @@ jQuery.fn.deleteModel = function(type, options) {
      return false;
    });
 };
-
-

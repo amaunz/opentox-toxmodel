@@ -14,10 +14,10 @@
       %span{:id => "model_#{model.id}_status", :class => model.status}
         = haml :model_status, :locals=>{:model=>model}, :layout => false 
       (
-      %a{:href => url_for("/model/#{model.id}/delete"), :id => "delete_#{model.id}", :class => 'delete'} delete
+      %a{:href => url_for("/model/#{model.id}"), :id => "delete_#{model.id}", :class => 'delete'} delete
       )
     %dt Started:
-    %dd= model.created_at
+    %dd= model.created_at.strftime("%m/%d/%Y - %I:%M:%S%p")
     %dt Training compounds:
     %dd= model.nr_compounds
     %dt Warnings:
@@ -43,8 +43,6 @@
         %a{:href => "#{model.training_dataset}.rdf"} RDF/XML
         ,
         %a{:href => "#{model.training_dataset}.yaml"} YAML
-        ,
-        %a{:href => "#{model.training_dataset}.html"} HTML
         %em  (more formats to be added)
       %dt Feature dataset:
       %dd

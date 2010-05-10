@@ -86,12 +86,13 @@ get '/models/?' do
 	haml :models
 end
 
-delete '/model/:id/delete/?' do
+delete '/model/:id/?' do
 	model = ToxCreateModel.get(params[:id])
 	begin
 		RestClient.delete model.uri if model.uri
 		RestClient.delete model.task_uri if model.task_uri
 	rescue
+	  flash[:notice] = "#{model.name} model delete error."
 	end
 	model.destroy!
 	flash[:notice] = "#{model.name} model deleted."
@@ -104,7 +105,7 @@ get '/model/:id/status/?' do
 	begin
 		haml :model_status, :locals=>{:model=>model}, :layout => false
 	rescue
-    
+    return "unavailable"
 	end
 end
 
