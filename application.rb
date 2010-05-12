@@ -37,7 +37,11 @@ class ToxCreateModel
 	end
 
 	def algorithm
-		RestClient.get(File.join(@uri, 'algorithm')).body
+		begin
+			RestClient.get(File.join(@uri, 'algorithm')).body
+		rescue
+			""
+		end
 	end
 
 	def training_dataset
@@ -74,7 +78,7 @@ get '/models/?' do
 	@models = ToxCreateModel.all(:order => [ :created_at.desc ])
 	@models.each do |model|
 		if !model.uri and model.status == "Completed"
-			model.uri = RestClient.get(File.join(model.task_uri, 'resultURI')).body.to_s
+			model.uri = RestClient.get(File.join(model.task_uri, 'resultURI')).body
 			model.save
 		end
 		unless @@config[:services]["opentox-model"].match(/localhost/)
@@ -241,12 +245,8 @@ post '/predict/?' do # post chemical name to model
 		title = nil
 		db_activities = []
 		LOGGER.debug model.inspect
-		#LOGGER.debug "curl -X POST -d 'compound_uri=#{@compound.uri}' -H 'Accept:application/x-yaml' #{model.uri}"
 		prediction = YAML.load(`curl -X POST -d 'compound_uri=#{@compound.uri}' -H 'Accept:application/x-yaml' #{model.uri}`)
-		#LOGGER.debug prediction.inspect
 		source = prediction.creator
-		#LOGGER.debug source
-		#LOGGER.debug prediction.to_yaml
 		if prediction.data[@compound.uri]
 			if source.to_s.match(/model/)
 				prediction = prediction.data[@compound.uri].first.values.first
