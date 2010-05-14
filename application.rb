@@ -29,11 +29,19 @@ class ToxCreateModel
 	end
 
 	def validation_status
-		RestClient.get(File.join(@validation_task_uri, 'hasStatus')).body
+		begin
+			RestClient.get(File.join(@validation_task_uri, 'hasStatus')).body
+		rescue
+			"Service offline"
+		end
 	end
 
 	def validation_report_status
-		RestClient.get(File.join(@validation_report_task_uri, 'hasStatus')).body
+		begin
+			RestClient.get(File.join(@validation_report_task_uri, 'hasStatus')).body
+		rescue
+			"Service offline"
+		end
 	end
 
 	def algorithm
