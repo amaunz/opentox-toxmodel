@@ -1,0 +1,195 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+<head>
+  <meta name="generator" content=
+  "HTML Tidy for Linux/x86 (vers 12 April 2005), see www.w3.org">
+  <meta http-equiv="content-type" content=
+  "text/html; charset=us-ascii">
+
+  <title>JME Help</title>
+  <meta name="author" content="Peter Ertl, Novartis Pharma AG">
+  <link rel="stylesheet" href="../style.css" type="text/css">
+<style type="text/css">
+ body {
+  background-color: white;
+ }
+ h2.c3 {text-align: center}
+ p.c2 {font-style: italic; text-align: right}
+ p.c1 {text-align: center}
+</style>
+</head>
+
+<body>
+				<h1>JME Molecular Editor</h1>
+
+        <p class="c2">Written by Peter Ertl, Novartis Pharma
+        AG</p>
+
+        <h2 class="c3">Basic Instructions</h2>
+
+        <p>This editor is intended to be used without any special
+        documentation or training, but there are some tricks which
+        can help you to work with it more efficiently.</p>
+
+        <h3>Menu Buttons</h3>
+
+        <ul>
+          <li><b>D-R</b> deletes functional groups - choose this
+          option and then click on the bond connecting the group
+          with the main skeleton</li>
+
+          <li><b>UDO</b> undo last editing step</li>
+
+          <li><b>QRY</b> (if enabled in the param tag) allows easy
+          specification of atomic queries for substructure
+          searches</li>
+
+          <li><b>Stereo bonds</b> - the type of stereo bond (up,
+          down) may be changed by clicking on the already created
+          stereo bond; this cycles through two / four possible
+          stereo bond types</li>
+
+          <li><b>Atomic charges</b> may be changed by the
+          <b>+/-</b> button. Editor enables modification of charges
+          only in "reasonable" cases. If you are not satisfied with
+          the editor's inteligence (concerning charges and the
+          explicit number of hydrogens) you can force your will by
+          using the <b>X</b> button</li>
+
+          <li><b>"Non-organic" atoms</b> or atoms with nonstandard
+          valence may be entered with help of <b>X</b> button by
+          specifying atomic SMILES (without [ ] brackets, i.e. Si,
+          Fe++, NH3+).</li>
+        </ul>
+
+        <h3>Keyboard Shortcuts</h3>
+
+        <p>Most of the commands may be accessed also by keyboard
+        shortcuts. It is possible to:</p>
+
+        <ul>
+          <li>change <b>atom type</b> by pressing <b>C</b>,
+          <b>N</b>, <b>O</b>, <b>S</b>, <b>F</b>, <b>L</b> (for Cl)
+          <b>B</b> (for Br) <b>I</b>, <b>P</b>, <b>H</b>, <b>X</b>,
+          <b>R</b> and clicking the respective atom</li>
+
+          <li>choose <b>bond order</b>: <b>-</b> for single bond,
+          <b>=</b> for double bond, <b>#</b> for triple bond</li>
+
+          <li>choose <b>ring type</b> by pressing <b>3</b>,
+          <b>4</b>, <b>5</b>, <b>6</b>, <b>7</b>, <b>8</b>,
+          <b>9</b> or <b>1</b> for phenyl, <b>0</b> for furyl</li>
+
+          <li>start <b>delete mode</b> by pressing <b>D</b> or
+          <b>Del</b> and</li>
+
+          <li>return to the <b>standard state</b> (carbon, single
+          bond) with <b>Esc</b></li>
+        </ul>
+
+        <p><b>common functional groups</b> may also be added by
+        keyboard shortcuts. Use <b>t</b> for t-butyl, <b>ft</b> for
+        trifluoromethyl, <b>lt</b> for trichloromethyl, <b>a</b>
+        for COOH, <b>z</b> for SO2Me and <b>y</b> for nitro, and
+        then click the atom where the group should be
+        connected.</p>
+
+        <h3>Moving and Rotation</h3>
+
+        <p>You can move molecule by "dragging free space" with the
+        left mouse button and rotate it by using the left mouse
+        button and <b>Shift</b> key (or left and right mouse
+        buttons together).</p>
+
+        <h3>Adding rings</h3>
+
+        <p>When a ring template is selected and multivalent atom is
+        clicked, a new ring will be created connected by single
+        bond to this atom. When spiro ring is required, the
+        <b>Shift</b> key must be pressed when clicking on the atom.
+        Spiro ring may be added only to atom with 2 single
+        bonds.</p>
+
+        <h3>Multivalent nitrogen groups</h3>
+
+        <p>Multivalent nitrogen groups, such as nitro, azide,
+        N-oxide, nitrile etc, should be drawn with a pentavalent
+        nitrogen as shown below.</p>
+
+        <p class="c1"><img src="images/nitro.gif" alt=
+        "nitro stuff"></p>
+
+        <p>The program automatically converts polar form of these
+        groups into non-polar one with pentavalent nitrogen. If you
+        prefer polar nitro (and similar) groups, use keyword
+        "polarnitro" in the applet param tag.</p>
+
+        <h3>Stereochemistry</h3>
+
+        <p>Stereochemistry at C4 centers, double bonds and allenes
+        is supported. Use the up/down wedge bonds to indicate
+        stereochemistry at the C4 centers. Remember, that only
+        bonds with a "sharp point" towards the atom are considered.
+        When creating SMILES the editor tries to guess missing
+        stereo features, in unresolvable cases an error message is
+        issued and the SMILES without stereo information is
+        created.</p>
+
+        <p>When the autoez keyword is set, SMILES with E,Z
+        stereochemistry on all non-ring double bonds is generated
+        automatically. Without this keyword (or for ring double
+        bonds) you have to mark a double bond as stereo by clicking
+        on it with the stereo bond button selected. The bond color
+        will change to violet.</p>
+
+        <p>Stereochemistry may be completely disabled by the
+        "nostereo" option in the param tag.</p>
+
+        <h3>Input of Multipart Structures</h3>
+
+        <p>By default only non-disconnected structures are allowed.
+        This may be changed by a "multipart" option in the applet
+        param tag. A button <b>NEW</b> appears in the JME menu.
+        Creation of a new molecule may be started only after
+        clicking the <b>NEW</b> button, selecting a proper template
+        (atom, ring, bond) and clicking free space in the drawing
+        area. Without <b>NEW</b> button the click on the free space
+        has the same effect as in the standard mode (i.e moving or
+        rotation of the last touched molecule). In the multipart
+        mode <b>CLR</b> button deletes the last touched
+        molecule.</p>
+
+        <h3>Atom Numbering</h3>
+
+        <p>Atom numbering (marking) is enabled with the option
+        "number" in the applet param tag (for reaction input this
+        is default). Button <b>123</b> appears in the JME menu. To
+        mark an atom press the <b>123</b> button and then the atom.
+        You can mark more atoms with the same number when pressing
+        <b>Shift</b> while clicking the 2nd and further atoms.
+        Second click on the marked atom deletes the number.</p>
+
+        <h3>Reaction Input</h3>
+
+        <p>Reaction input is enabled with the option "reaction" in
+        the applet param tag. Button with an arrow, <b>NEW</b>
+        button and <b>123</b> button appear in the JME menu and
+        arrow appears also in the drawing area. Now simply draw
+        reactant(s), product(s) and modulator(s) (modulators have
+        to be above the arrow) as explained in the description of
+        input of multipart structures. The arrow button enables
+        simplified input of reactions. After clicking it, the
+        reactant will be copied to the product (including atom
+        numbering, if any). When the <b>Shift</b> is pressed during
+        this action all atoms will be automatically numbered.</p>
+
+        <h3>Query Features</h3>
+
+        <p>Query button (when enabled in the option tag) launches a
+        query window which allows creation of SMARTS atom queries
+        by combining various atom attributes. Create a SMARTS query
+        and then click the respective atom in the
+        molecule.</p>
+</body>
+</html>

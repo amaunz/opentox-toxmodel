@@ -1,7 +1,7 @@
 ['rubygems', "haml", "sass", "rack-flash"].each do |lib|
 	require lib
 end
-gem 'opentox-ruby-api-wrapper', '= 1.4.0'
+gem 'opentox-ruby-api-wrapper', '= 1.5.0'
 require 'opentox-ruby-api-wrapper'
 gem 'sinatra-static-assets'
 require 'sinatra/static_assets'
@@ -18,25 +18,34 @@ class ToxCreateModel
 	property :task_uri, String, :length => 255
 	property :validation_task_uri, String, :length => 255
 	property :validation_uri, String, :length => 255
+	property :validation_report_task_uri, String, :length => 255
 	property :validation_report_uri, String, :length => 255
 	property :warnings, Text, :length => 2**32-1 
 	property :nr_compounds, Integer
 	property :created_at, DateTime
 
 	def status
-		RestClient.get(File.join(@task_uri, 'status')).body
+		RestClient.get(File.join(@task_uri, 'hasStatus')).body
 	end
 
 	def validation_status
-		#RestClient.get(File.join(@validation_task_uri, 'status')).body
+		RestClient.get(File.join(@validation_task_uri, 'hasStatus')).body
+	end
+
+	def validation_report_status
+		RestClient.get(File.join(@validation_report_task_uri, 'hasStatus')).body
 	end
 
 	def algorithm
-		RestClient.get(File.join(@uri, 'algorithm')).body
+		begin
+			RestClient.get(File.join(@uri, 'algorithm')).body
+		rescue
+			""
+		end
 	end
 
 	def training_dataset
-		RestClient.get(File.join(@uri, 'training_dataset')).body
+		RestClient.get(File.join(@uri, 'trainingDataset')).body
 	end
 
 	def feature_dataset
@@ -68,17 +77,20 @@ end
 get '/models/?' do
 	@models = ToxCreateModel.all(:order => [ :created_at.desc ])
 	@models.each do |model|
-		if !model.uri and model.status == "completed"
-			model.uri = RestClient.get(File.join(model.task_uri, 'resource')).to_s
+		if !model.uri and model.status == "Completed"
+			model.uri = RestClient.get(File.join(model.task_uri, 'resultURI')).body
 			model.save
 		end
 		unless @@config[:services]["opentox-model"].match(/localhost/)
-			if !model.validation_uri and model.validation_status == "completed"
-				model.validation_uri = RestClient.get(File.join(model.validation_task_uri, 'resource')).to_s
+			if !model.validation_uri and model.validation_status == "Completed"
+				model.validation_uri = RestClient.get(File.join(model.validation_task_uri, 'resultURI')).body
 				LOGGER.debug "Validation URI: #{model.validation_uri}"
-				model.validation_report_uri = RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => validation_uri).to_s
-				LOGGER.debug "Validation Report URI: #{model.validation_report_uri}"
+				model.validation_report_task_uri = RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => model.validation_uri).body
+				LOGGER.debug "Validation Report Task URI: #{model.validation_report_task_uri}"
 				model.save
+			end
+			if model.validation_report_task_uri and !model.validation_report_uri and model.validation_report_status == 'Completed'
+				model.validation_report_uri = RestClient.get(File.join(model.validation_report_task_uri, 'resultURI')).body
 			end
 		end
 	end
@@ -140,7 +152,7 @@ end
 
 get '/predict/?' do 
 	@models = ToxCreateModel.all(:order => [ :created_at.desc ])
-	@models = @models.collect{|m| m if m.status == 'completed'}.compact
+	@models = @models.collect{|m| m if m.status == 'Completed'}.compact
 	haml :predict
 end
 
@@ -177,10 +189,9 @@ post '/upload' do # create a new model
 	end
 	@model = ToxCreateModel.new
 	@model.name = params[:endpoint]
-	title = URI.encode params[:endpoint]
 	dataset = OpenTox::Dataset.new
-	dataset.title = title
-	feature_uri = url_for("/feature#"+title, :full)
+	dataset.title = params[:endpoint]
+	feature_uri = url_for("/feature#"+URI.encode(params[:endpoint]), :full)
 	dataset.features << feature_uri
 	smiles_errors = []
 	activity_errors = []
@@ -217,7 +228,7 @@ post '/upload' do # create a new model
 		line_nr += 1
 	end
 	dataset_uri = dataset.save 
-	task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :feature_uri => feature_uri)
+	task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :prediction_feature => feature_uri)
 	@model.task_uri = task_uri
 
 	unless @@config[:services]["opentox-model"].match(/localhost/)
@@ -227,7 +238,7 @@ post '/upload' do # create a new model
 			:prediction_feature => feature_uri,
 			:algorithm_params => "feature_generation_uri=#{OpenTox::Algorithm::Fminer.uri}"
 		).uri
-		LOGGER.debug "Validation task: " + validation_task_uri
+		#LOGGER.debug "Validation task: " + validation_task_uri
 		@model.validation_task_uri = validation_task_uri
 	end
 
@@ -244,7 +255,6 @@ post '/upload' do # create a new model
 	end
 	duplicate_warnings = ''
 	duplicates.each {|inchi,lines| duplicate_warnings += "<p>#{lines.join('<br/>')}</p>" if lines.size > 1 }
-	#LOGGER.debug duplicate_warnings
 	unless duplicate_warnings == ''
 		@model.warnings += "<p>Duplicated structures (all structures/activities used for model building, please  make sure, that the results were obtained from <em>independent</em> experiments):</p>" 
 		@model.warnings +=  duplicate_warnings
@@ -274,10 +284,9 @@ post '/predict/?' do # post chemical name to model
 		confidence = nil
 		title = nil
 		db_activities = []
+		LOGGER.debug model.inspect
 		prediction = YAML.load(`curl -X POST -d 'compound_uri=#{@compound.uri}' -H 'Accept:application/x-yaml' #{model.uri}`)
-		source = prediction.source
-		LOGGER.debug source
-		LOGGER.debug prediction.to_yaml
+		source = prediction.creator
 		if prediction.data[@compound.uri]
 			if source.to_s.match(/model/)
 				prediction = prediction.data[@compound.uri].first.values.first

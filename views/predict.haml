@@ -1,11 +1,25 @@
+:javascript
+  function getsmiles() {
+    if (document.JME.smiles() != '') {
+      document.form.identifier.value = document.JME.smiles() ;
+    }
+  }
+
 .input
   %p Use this service to obtain predictions from OpenTox models.
   - unless @models.empty?
-    %form{ :action => url_for('/predict'), :method => "post", :enctype => "multipart/form-data" }
+
+    %form{:name => "form", :action => url_for('/predict'), :method => "post", :enctype => "multipart/form-data" }
       %fieldset
-        %legend Enter a compound identifier
-        %label{:for => 'identifier'} Name, InChI, Smiles, CAS, ...
-        %input{:type => 'text', :name => 'identifier', :id => 'identifier', :size => '50'}
+        %legend Draw a compound
+        %label &nbsp;
+        .jme
+          %applet{:code => "JME.class",  :name => "JME", :archive => "JME.jar", :width => "500", :height => "360"}
+            %param{ :name => "options", :value => "polarnitro"}
+              Please enable Java and JavaScript in your browser to use the JME editor. 
+
+        %label{:for => 'identifier'} or enter a Name, InChI, Smiles, CAS, ...
+        %input{:type => 'text', :name => 'identifier', :id => 'identifier', :size => '60'}
       %fieldset
         %legend
           Choose one or more prediction models
@@ -15,6 +29,6 @@
           %input{:type => 'checkbox', :name => "selection[#{model.id}]", :value => true, :id => model.id} 
           %br
 
-      %input{ :type => "submit", :value => "Predict"}
+      %input{ :type => "submit", :value => "Predict", :onclick => "getsmiles();"}
       = link_to 'Cancel', '/predict' 
 
