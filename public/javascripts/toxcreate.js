@@ -70,7 +70,7 @@ $(function() {
         $("div#model_" + id).html(data);
       },
       error: function(data) {
-        alert("loadModel error");
+        //alert("loadModel error");
       }
     });
     return false;
@@ -100,7 +100,7 @@ jQuery.fn.deleteModel = function(type, options) {
            $(opts.elem).fadeTo("slow",0).slideUp("slow");
          },
          error: function(data) {
-           alert("model delete error!");
+           //alert("model delete error!");
          }
        });
      }
