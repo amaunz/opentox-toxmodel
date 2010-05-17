@@ -29,7 +29,7 @@ class ToxCreateModel
 	end
 
 	def validation_status
-		RestClient.get(File.join(@validation_task_uri, 'hasStatus')).body
+		RestClient.get(File.join(@validation_task_uri, 'hasStatus')).body if @validation_task_uri
 	end
 
 	def validation_report_status
@@ -124,18 +124,21 @@ end
 get '/model/:id/?' do
   response['Content-Type'] = 'text/plain'
 	model = ToxCreateModel.get(params[:id])
-  if !model.uri and model.status == "completed"
-	  model.uri = RestClient.get(File.join(model.task_uri, 'resource')).to_s
-		model.save
-	end
+  if !model.uri and model.status == "Completed"
+	  model.uri = RestClient.get(File.join(model.task_uri, 'resultURI')).body
+	  model.save
+  end
 =begin
 		unless @@config[:services]["opentox-model"].match(/localhost/)
-			if !model.validation_uri and model.validation_status == "completed"
-				model.validation_uri = RestClient.get(File.join(model.validation_task_uri, 'resource')).to_s
+			if !model.validation_uri and model.validation_status == "Completed"
+				model.validation_uri = RestClient.get(File.join(model.validation_task_uri, 'resultURI')).body
 				LOGGER.debug "Validation URI: #{model.validation_uri}"
-				model.validation_report_uri = RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => validation_uri).to_s
-				LOGGER.debug "Validation Report URI: #{model.validation_report_uri}"
+				model.validation_report_task_uri = RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => model.validation_uri).body
+				LOGGER.debug "Validation Report Task URI: #{model.validation_report_task_uri}"
 				model.save
+			end
+			if model.validation_report_task_uri and !model.validation_report_uri and model.validation_report_status == 'Completed'
+				model.validation_report_uri = RestClient.get(File.join(model.validation_report_task_uri, 'resultURI')).body
 			end
 		end
 =end

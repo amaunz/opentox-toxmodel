@@ -27,7 +27,7 @@
       %a{:href => "#", :id => "show_model_#{model.id}_warnings"} show
       %dd{:id => "model_#{model.id}_warnings", :style => "display: none;"}= model.warnings
 
-    - if model.status == 'completed'
+    - if model.status == 'Completed'
       %dt Algorithm:
       %dd
         %a{:href => model.algorithm} #{File.basename model.algorithm}
@@ -56,8 +56,8 @@
         %a{:href => "#{model.uri}.yaml"} YAML
         %em  (more formats to be added)
       %dt Validation:
-        - if model.validation_report_uri
-          %a{:href => model.validation_report_uri, :target => "_blank"} (more details)
+      - if model.validation_report_uri
+        %a{:href => model.validation_report_uri, :target => "_blank"} (more details)
       %dd
         - if model.validation_uri
           - uri = File.join(model.validation_uri, 'statistics')

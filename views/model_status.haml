@@ -1,3 +1,2 @@
-- if model.status.match(/started|created/)
-  = image_tag("/snake_transparent.gif") 
+= image_tag("/snake_transparent.gif") if model.status.match(/running|started|created/i)
 = model.status

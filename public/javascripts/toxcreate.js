@@ -36,7 +36,7 @@ $(function() {
         '_method': 'get'
       },
       success: function(data) {
-        var erg = data.search(/started/);
+        var erg = data.search(/Running/);
         status_changed = false;
         if(erg < 0) status_changed = true;        
         $("span#model_" + id + "_status").animate({"opacity": "0.1"},1000);
