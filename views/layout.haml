@@ -4,8 +4,10 @@
   %head
     %meta{'http-equiv' => 'Content-Type', :content => 'text/html'}
     - if @refresh
-      %meta{'http-equiv' => "refresh", :content => "15"}
+      - # %meta{'http-equiv' => "refresh", :content => "15"}
     %title ToxCreate
+    %script{:type => "text/javascript", :src  => "javascripts/jquery.js"}
+    %script{:type => "text/javascript", :src  => "javascripts/toxcreate.js"}
     %link{:rel=>'stylesheet', :href=>'stylesheets/style.css', :type => "text/css"}      
 
   %body
@@ -34,7 +36,7 @@
 
       - if flash[:notice]
         %p
-        .notice
+        .notice#flashnotice
           = flash[:notice]
 
       = yield
@@ -44,5 +46,3 @@
       %a{:href => 'http://www.in-silico.ch'} in silico toxicology
       2009-2010, powered by
       %a{:href => 'http://www.opentox.org'} <span style="color:#5D308A;font-family:arial,sans-serif,helvetica;letter-spacing:-1px;">Open</span><span style="color:#000;font-family:arial,sans-serif,helvetica;font-weight:bold;letter-spacing:-1px;position:relative;">Tox</span>
-
- 

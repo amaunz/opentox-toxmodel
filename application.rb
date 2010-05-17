@@ -53,11 +53,19 @@ class ToxCreateModel
 	end
 
 	def training_dataset
-		RestClient.get(File.join(@uri, 'trainingDataset')).body
+		begin
+			RestClient.get(File.join(@uri, 'trainingDataset')).body
+		rescue
+			""
+		end
 	end
 
 	def feature_dataset
-		RestClient.get(File.join(@uri, 'feature_dataset')).body
+		begin
+			RestClient.get(File.join(@uri, 'feature_dataset')).body
+		rescue
+			""
+		end
 	end
 
 end
@@ -75,6 +83,43 @@ helpers do
 			act = "not available"
 		end
 		act
+	end
+
+	def validation(model)
+		begin
+			uri = File.join(model.validation_uri, 'statistics')
+			yaml = RestClient.get(uri).body
+			v = YAML.load(yaml)
+			tp=0; tn=0; fp=0; fn=0; n=0
+			v[:classification_statistics][:confusion_matrix][:confusion_matrix_cell].each do |cell|
+				if cell[:confusion_matrix_predicted] == "true" and cell[:confusion_matrix_actual] == "true"
+					tp = cell[:confusion_matrix_value]
+					n += tp
+				elsif cell[:confusion_matrix_predicted] == "false" and cell[:confusion_matrix_actual] == "false"
+					tn = cell[:confusion_matrix_value]
+					n += tn
+				elsif cell[:confusion_matrix_predicted] == "false" and cell[:confusion_matrix_actual] == "true"
+					fn = cell[:confusion_matrix_value]
+					n += fn
+				elsif cell[:confusion_matrix_predicted] == "true" and cell[:confusion_matrix_actual] == "false"
+					fp = cell[:confusion_matrix_value]
+					n += fp
+				end
+			end
+			{
+				:n => n,
+				:tp => tp,
+				:fp => fp,
+				:tn => tn,
+				:fn => fn, 
+				:correct_predictions => sprintf("%.2f", 100*(tp+tn).to_f/n),
+				:weighted_area_under_roc => sprintf("%.3f", v[:classification_statistics][:weighted_area_under_roc].to_f),
+				:sensitivity => sprintf("%.3f", tp.to_f/(tp+fn)),
+				:specificity => sprintf("%.3f", tn.to_f/(tn+fp))
+			}
+		rescue
+			"Service not available"
+		end
 	end
 end
 
@@ -106,17 +151,60 @@ get '/models/?' do
 	haml :models
 end
 
-get '/model/:id/delete/?' do
+delete '/model/:id/?' do
 	model = ToxCreateModel.get(params[:id])
 	begin
 		RestClient.delete model.uri if model.uri
 		RestClient.delete model.task_uri if model.task_uri
 	rescue
+	  flash[:notice] = "#{model.name} model delete error."
 	end
 	model.destroy!
 	flash[:notice] = "#{model.name} model deleted."
 	redirect url_for('/models')
 end
+
+get '/model/:id/status/?' do
+  response['Content-Type'] = 'text/plain'
+	model = ToxCreateModel.get(params[:id])
+	begin
+		haml :model_status, :locals=>{:model=>model}, :layout => false
+	rescue
+    return "unavailable"
+	end
+end
+
+get '/model/:id/?' do
+  response['Content-Type'] = 'text/plain'
+	model = ToxCreateModel.get(params[:id])
+  if !model.uri and model.status == "Completed"
+	  model.uri = RestClient.get(File.join(model.task_uri, 'resultURI')).body
+	  model.save
+  end
+=begin
+		unless @@config[:services]["opentox-model"].match(/localhost/)
+			if !model.validation_uri and model.validation_status == "Completed"
+				model.validation_uri = RestClient.get(File.join(model.validation_task_uri, 'resultURI')).body
+				LOGGER.debug "Validation URI: #{model.validation_uri}"
+				model.validation_report_task_uri = RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => model.validation_uri).body
+				LOGGER.debug "Validation Report Task URI: #{model.validation_report_task_uri}"
+				model.save
+			end
+			if model.validation_report_task_uri and !model.validation_report_uri and model.validation_report_status == 'Completed'
+				model.validation_report_uri = RestClient.get(File.join(model.validation_report_task_uri, 'resultURI')).body
+			end
+		end
+=end
+
+	@refresh = true #if @models.collect{|m| m.status}.grep(/started|created/)
+
+  begin
+		haml :model, :locals=>{:model=>model}, :layout => false
+	rescue
+    return "unable to renderd model"
+	end
+end
+
 
 get '/predict/?' do 
 	@models = ToxCreateModel.all(:order => [ :created_at.desc ])
