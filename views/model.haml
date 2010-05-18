@@ -36,11 +36,11 @@
         %a{:href => 'http://www.maunz.de/libfminer2-bbrc-doc/'} Fminer backbone refinement classes
       %dt Training dataset:
       %dd
+        %a{:href => "#{model.training_dataset}.xls"} XLS
+        ,
         %a{:href => "#{model.training_dataset}.rdf"} RDF/XML
         ,
         %a{:href => "#{model.training_dataset}.yaml"} YAML
-        ,
-        %a{:href => "#{model.training_dataset}.xls"} XLS
         %em  (more formats to be added)
       %dt Feature dataset:
       %dd
@@ -55,11 +55,12 @@
         %a{:href => "#{model.uri}.yaml"} YAML
         %em  (more formats to be added)
       %dt Validation:
+      = model.validation_uri
       - if model.validation_report_uri
         %a{:href => model.validation_report_uri, :target => "_blank"} (more details)
       %dd
         - if model.validation_uri
-          - v = validation(model)
+          - v = model.validation
           - if v == "Service not available"
             = v
           - else

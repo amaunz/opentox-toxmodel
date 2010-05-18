@@ -1,7 +1,7 @@
 ['rubygems', "haml", "sass", "rack-flash"].each do |lib|
 	require lib
 end
-gem 'opentox-ruby-api-wrapper', '= 1.5.0'
+gem 'opentox-ruby-api-wrapper', '= 1.5.1'
 require 'opentox-ruby-api-wrapper'
 gem 'sinatra-static-assets'
 require 'sinatra/static_assets'
@@ -68,26 +68,9 @@ class ToxCreateModel
 		end
 	end
 
-end
-
-DataMapper.auto_upgrade!
-
-helpers do
-	def activity(a)
-		case a.to_s
-		when "true"
-			act = "active"
-		when "false"
-			act = "inactive"
-		else
-			act = "not available"
-		end
-		act
-	end
-
-	def validation(model)
+	def validation
 		begin
-			uri = File.join(model.validation_uri, 'statistics')
+			uri = File.join(@validation_uri, 'statistics')
 			yaml = RestClient.get(uri).body
 			v = YAML.load(yaml)
 			tp=0; tn=0; fp=0; fn=0; n=0
@@ -121,6 +104,24 @@ helpers do
 			"Service not available"
 		end
 	end
+
+end
+
+DataMapper.auto_upgrade!
+
+helpers do
+	def activity(a)
+		case a.to_s
+		when "true"
+			act = "active"
+		when "false"
+			act = "inactive"
+		else
+			act = "not available"
+		end
+		act
+	end
+
 end
 
 get '/?' do
@@ -181,22 +182,7 @@ get '/model/:id/?' do
 	  model.uri = RestClient.get(File.join(model.task_uri, 'resultURI')).body
 	  model.save
   end
-=begin
-		unless @@config[:services]["opentox-model"].match(/localhost/)
-			if !model.validation_uri and model.validation_status == "Completed"
-				model.validation_uri = RestClient.get(File.join(model.validation_task_uri, 'resultURI')).body
-				LOGGER.debug "Validation URI: #{model.validation_uri}"
-				model.validation_report_task_uri = RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => model.validation_uri).body
-				LOGGER.debug "Validation Report Task URI: #{model.validation_report_task_uri}"
-				model.save
-			end
-			if model.validation_report_task_uri and !model.validation_report_uri and model.validation_report_status == 'Completed'
-				model.validation_report_uri = RestClient.get(File.join(model.validation_report_task_uri, 'resultURI')).body
-			end
-		end
-=end
-
-	@refresh = true #if @models.collect{|m| m.status}.grep(/started|created/)
+	@refresh = true 
 
   begin
 		haml :model, :locals=>{:model=>model}, :layout => false
@@ -222,6 +208,10 @@ end
 
 get '/csv_format' do
 	haml :csv_format
+end
+
+get "/confidence" do
+	haml :confidence
 end
 
 get '/tasks' do
