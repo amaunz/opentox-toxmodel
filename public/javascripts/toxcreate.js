@@ -10,8 +10,8 @@ $(function() {
         $("dd#model_" + id + "_warnings").slideUp("slow");
         $("a#show_model_" + id + "_warnings").html("show");
       }
+      return false;
     });
-    return false;
   };
 
   checkStati = function(stati) {
@@ -89,6 +89,7 @@ jQuery.fn.deleteModel = function(type, options) {
   var opts = $.extend(defaults, options);
   this.bind(opts.trigger_on, function() {
     if(confirm(opts.confirm_message)) {
+      $(opts.elem).fadeTo("slow",0.5);
       $.ajax({
          type: opts.method,
          url:  opts.action,
