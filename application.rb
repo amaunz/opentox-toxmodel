@@ -25,6 +25,7 @@ class ToxCreateModel
 	property :created_at, DateTime
 
 	def status
+		##LOGGER.debug RestClient.get(File.join(@task_uri, 'hasStatus')).body
 		RestClient.get(File.join(@task_uri, 'hasStatus')).body
 	end
 
@@ -101,7 +102,7 @@ class ToxCreateModel
 				:specificity => sprintf("%.3f", tn.to_f/(tn+fp))
 			}
 		rescue
-			"Service not available"
+			"Service offline"
 		end
 	end
 
@@ -148,7 +149,6 @@ get '/models/?' do
 			end
 		end
 	end
-	@refresh = true #if @models.collect{|m| m.status}.grep(/started|created/)
 	haml :models
 end
 
@@ -182,7 +182,6 @@ get '/model/:id/?' do
 	  model.uri = RestClient.get(File.join(model.task_uri, 'resultURI')).body
 	  model.save
   end
-	@refresh = true 
 
   begin
 		haml :model, :locals=>{:model=>model}, :layout => false

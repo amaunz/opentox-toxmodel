@@ -1,4 +1,4 @@
-- stati = @models.map{|m| "#{m.id}" if m.status != "completed"}.compact
+- stati = @models.map{|m| "#{m.id}" if m.status != "Completed"}.compact
 - stati_to_check = stati.length > 0 ? stati.join(", ") : stati = 0 
 :javascript
   $(function() {

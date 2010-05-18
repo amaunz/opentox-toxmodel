@@ -36,28 +36,28 @@
         %a{:href => 'http://www.maunz.de/libfminer2-bbrc-doc/'} Fminer backbone refinement classes
       %dt Training dataset:
       %dd
-        %a{:href => "#{model.training_dataset}.xls"} XLS
+        %a{:href => "#{model.training_dataset}.xls"} Excel sheet
         ,
         %a{:href => "#{model.training_dataset}.rdf"} RDF/XML
-        ,
+        %em (experts) ,
         %a{:href => "#{model.training_dataset}.yaml"} YAML
-        %em  (more formats to be added)
+        %em  (experts)
       %dt Feature dataset:
       %dd
         %a{:href => "#{model.feature_dataset}.rdf"} RDF/XML
         ,
         %a{:href => "#{model.feature_dataset}.yaml"} YAML
-        %em  (more formats to be added)
+        %em  (experts, dataset too large for Excel)
       %dt Model:
       %dd
         %a{:href => "#{model.uri}.rdf"} RDF/XML
         ,
         %a{:href => "#{model.uri}.yaml"} YAML
-        %em  (more formats to be added)
-      %dt Validation:
-      = model.validation_uri
-      - if model.validation_report_uri
-        %a{:href => model.validation_report_uri, :target => "_blank"} (more details)
+        %em  (experts, models cannot be exported in Excel)
+      %dt
+        Validation:
+        - if model.validation_report_uri
+          %a{:href => model.validation_report_uri, :target => "_blank"} (more details)
       %dd
         - if model.validation_uri
           - v = model.validation
