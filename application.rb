@@ -293,7 +293,7 @@ post '/upload' do # create a new model
       c = OpenTox::Compound.new(:smiles => smiles)
       if c.inchi != ""
     	duplicates[c.inchi] = [] unless duplicates[c.inchi]
-    	duplicates[c.inchi] << "Line #{line_nr}: " + book.cell(row,1).chomp
+    	duplicates[c.inchi] << "Line #{line_nr}: " + smiles if smiles
     	compound_uri = c.uri
     			dataset.compounds << compound_uri
     			dataset.data[compound_uri] = [] unless dataset.data[compound_uri]
@@ -305,15 +305,15 @@ post '/upload' do # create a new model
     				dataset.data[compound_uri] << {feature_uri => false }
     				nr_compounds += 1
     			else
-    				activity_errors << "Line #{line_nr}: " + book.cell(row,1).chomp
+    				activity_errors << "Line #{line_nr}: " + smiles if smiles
     			end
     		else
-    			smiles_errors << "Line #{line_nr}: " + book.cell(row,1).chomp
+    			smiles_errors << "Line #{line_nr}: " + smiles if smiles
     		end
     		line_nr += 1
     end
   else
-    LOGGER.error "Fileupload Error: " +  params[:file].inspect 
+    LOGGER.error "Fileupload (Excel) Error: " +  params[:file].inspect 
   end	
 	dataset_uri = dataset.save 
 	task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :prediction_feature => feature_uri)
