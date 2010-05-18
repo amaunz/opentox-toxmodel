@@ -1,0 +1,105 @@
+- uri = url_for("/model/#{model.id}", :full)
+- js = "$('#delete_#{model.id}').deleteModel('DELETE', {elem: '#model_#{model.id}'});\n  " + "$('#show_model_#{model.id}_warnings').toggleWarnings('#{model.id}');"
+:javascript
+  $(function() {
+    #{js}
+  });
+  
+%div{:id => "model_#{model.id}"}  
+  %h2
+    = model.name
+  %dl
+    %dt Status:
+    %dd
+      %span{:id => "model_#{model.id}_status", :class => model.status}
+        = haml :model_status, :locals=>{:model=>model}, :layout => false 
+      (
+      %a{:href => url_for("/model/#{model.id}"), :id => "delete_#{model.id}", :class => 'delete'} delete
+      )
+    %dt Started:
+    %dd= model.created_at.strftime("%m/%d/%Y - %I:%M:%S%p")
+    %dt Training compounds:
+    %dd= model.nr_compounds
+    %dt Warnings:
+    - if model.warnings == ''
+      %dd -
+    - else
+      %a{:href => "#", :id => "show_model_#{model.id}_warnings"} show
+      %dd{:id => "model_#{model.id}_warnings", :style => "display: none;"}= model.warnings
+
+    - if model.status == 'Completed'
+      %dt Algorithm:
+      %dd
+        %a{:href => model.algorithm} #{File.basename model.algorithm}
+      %dt Descriptors:
+      %dd
+        %a{:href => 'http://www.maunz.de/libfminer2-bbrc-doc/'} Fminer backbone refinement classes
+      %dt Training dataset:
+      %dd
+        %a{:href => "#{model.training_dataset}.xls"} Excel sheet
+        ,
+        %a{:href => "#{model.training_dataset}.rdf"} RDF/XML
+        %em (experts) ,
+        %a{:href => "#{model.training_dataset}.yaml"} YAML
+        %em  (experts)
+      %dt Feature dataset:
+      %dd
+        %a{:href => "#{model.feature_dataset}.rdf"} RDF/XML
+        ,
+        %a{:href => "#{model.feature_dataset}.yaml"} YAML
+        %em  (experts, dataset too large for Excel)
+      %dt Model:
+      %dd
+        %a{:href => "#{model.uri}.rdf"} RDF/XML
+        ,
+        %a{:href => "#{model.uri}.yaml"} YAML
+        %em  (experts, models cannot be exported in Excel)
+      %dt
+        Validation:
+        - if model.validation_report_uri
+          %a{:href => model.validation_report_uri, :target => "_blank"} (more details)
+      %dd
+        - if model.validation_uri
+          - v = model.validation
+          - if v == "Service not available"
+            = v
+          - else
+            %dl
+              %dt Number of predictions:
+              %dd= v[:n]
+              %dt Correct predictions:
+              %dd
+                = v[:correct_predictions]
+                = '%'
+              %dt
+                %a{:href => "http://en.wikipedia.org/wiki/Receiver_operating_characteristic", :target => "_blank"} Weighted area under ROC:
+              %dd 
+                = v[:weighted_area_under_roc]
+              %dt
+                %a{:href => "http://en.wikipedia.org/wiki/Sensitivity_and_specificity", :target => "_blank"} Specificity:
+              %dd= v[:specificity]
+              %dt
+                %a{:href => "http://en.wikipedia.org/wiki/Sensitivity_and_specificity", :target => "_blank"} Sensitivity:
+              %dd= v[:sensitivity]
+              %dt
+                %a{:href => "http://en.wikipedia.org/wiki/Confusion_matrix", :target => "_blank"} Confusion Matrix:
+              %dd
+                %table
+                  %tr
+                    %th
+                    %th Measured
+                  %tr
+                    %th Predicted
+                    %th active
+                    %th inactive
+                  %tr
+                    %th active
+                    %td= v[:tp]
+                    %td= v[:fp]
+                  %tr
+                    %th inactive
+                    %td= v[:fn]
+                    %td= v[:tn]
+        - else
+          = image_tag("/snake_transparent.gif") if model.validation_status == "Running"
+          %a{:href => model.validation_task_uri} #{model.validation_status}
