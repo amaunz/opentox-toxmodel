@@ -36,26 +36,25 @@
         %a{:href => 'http://www.maunz.de/libfminer2-bbrc-doc/'} Fminer backbone refinement classes
       %dt Training dataset:
       %dd
+        %a{:href => "#{model.training_dataset}.xls"} Excel sheet
+        ,
         %a{:href => "#{model.training_dataset}.rdf"} RDF/XML
-        ,
+        %em (experts) ,
         %a{:href => "#{model.training_dataset}.yaml"} YAML
-        ,
-        %a{:href => "#{model.training_dataset}.xls"} XLS
-        %em  (more formats to be added)
+        %em  (experts)
       %dt Feature dataset:
       %dd
         %a{:href => "#{model.feature_dataset}.rdf"} RDF/XML
         ,
         %a{:href => "#{model.feature_dataset}.yaml"} YAML
-        %em  (more formats to be added)
+        %em  (experts, dataset too large for Excel)
       %dt Model:
       %dd
-        -# %a{:href => model.uri, :accept => "application/x-yaml"} yaml
         %a{:href => "#{model.uri}.rdf"} RDF/XML
         ,
         %a{:href => "#{model.uri}.yaml"} YAML
-        %em  (more formats to be added)
-      %dt 
+        %em  (experts, models cannot be exported in Excel)
+      %dt
         Validation:
         - if model.validation_report_uri
           %a{:href => model.validation_report_uri, :target => "_blank"} (more details)
@@ -74,7 +73,7 @@
                 = '%'
               %dt
                 %a{:href => "http://en.wikipedia.org/wiki/Receiver_operating_characteristic", :target => "_blank"} Weighted area under ROC:
-              %dd
+              %dd 
                 = v[:weighted_area_under_roc]
               %dt
                 %a{:href => "http://en.wikipedia.org/wiki/Sensitivity_and_specificity", :target => "_blank"} Specificity:
