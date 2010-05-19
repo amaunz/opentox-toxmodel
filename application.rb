@@ -187,10 +187,9 @@ get '/model/:id/?' do
   begin
 		haml :model, :locals=>{:model=>model}, :layout => false
 	rescue
-    return "unable to renderd model"
+    return "unable to render model"
 	end
 end
-
 
 get '/predict/?' do 
 	@models = ToxCreateModel.all(:order => [ :created_at.desc ])
@@ -246,7 +245,7 @@ post '/upload' do # create a new model
 	line_nr = 1
 
   case params[:file][:type] 
-  when "application/csv", "text/csv"
+  when "application/csv", "text/csv", "text/plain"
   	params[:file][:tempfile].each_line do |line|
   		unless line.chomp.match(/^.+[,;].*$/) # check CSV format - not all browsers provide correct content-type
   			flash[:notice] = "Please upload a CSV file created according to these #{link_to "instructions", "csv_format"}."
