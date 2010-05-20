@@ -6,6 +6,8 @@ require 'opentox-ruby-api-wrapper'
 gem 'sinatra-static-assets'
 require 'sinatra/static_assets'
 require 'spreadsheet'
+require 'roo'
+require 'ftools'
 LOGGER.progname = File.expand_path __FILE__
 
 use Rack::Flash
@@ -244,8 +246,8 @@ post '/upload' do # create a new model
 	nr_compounds = 0
 	line_nr = 1
 
-  case params[:file][:type] 
-  when "application/csv", "text/csv", "text/plain"
+  case File.extname(params[:file][:filename]) 
+  when ".csv"
   	params[:file][:tempfile].each_line do |line|
   		unless line.chomp.match(/^.+[,;].*$/) # check CSV format - not all browsers provide correct content-type
   			flash[:notice] = "Please upload a CSV file created according to these #{link_to "instructions", "csv_format"}."
@@ -275,13 +277,11 @@ post '/upload' do # create a new model
   		end
   		line_nr += 1
   	end	
-  when "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    require 'roo'
-    require 'ftools'
+  when ".xls", ".xlsx"
     excel = 'tmp/' + params[:file][:filename]
     name = params[:file][:filename]
     File.mv(params[:file][:tempfile].path,excel)
-    if params[:file][:type] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"    
+    if File.extname(params[:file][:filename]) == ".xlsx"    
       book = Excelx.new(excel)
     else
       book = Excel.new(excel)
@@ -311,6 +311,7 @@ post '/upload' do # create a new model
     		end
     		line_nr += 1
     end
+    File.safe_unlink(excel)
   else
     LOGGER.error "Fileupload (Excel) Error: " +  params[:file].inspect 
   end	
