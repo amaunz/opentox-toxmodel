@@ -5,6 +5,7 @@ gem 'opentox-ruby-api-wrapper', '= 1.5.1'
 require 'opentox-ruby-api-wrapper'
 gem 'sinatra-static-assets'
 require 'sinatra/static_assets'
+require 'spreadsheet'
 LOGGER.progname = File.expand_path __FILE__
 
 use Rack::Flash
@@ -185,10 +186,9 @@ get '/model/:id/?' do
   begin
 		haml :model, :locals=>{:model=>model}, :layout => false
 	rescue
-    return "unable to renderd model"
+    return "unable to render model"
 	end
 end
-
 
 get '/predict/?' do 
 	@models = ToxCreateModel.all(:order => [ :created_at.desc ])
@@ -242,35 +242,77 @@ post '/upload' do # create a new model
 	duplicates = {}
 	nr_compounds = 0
 	line_nr = 1
-	params[:file][:tempfile].each_line do |line|
-		unless line.chomp.match(/^.+[,;].*$/) # check CSV format - not all browsers provide correct content-type
-			flash[:notice] = "Please upload a CSV file created according to these #{link_to "instructions", "csv_format"}."
-			redirect url_for('/create')
-		end
-		items = line.chomp.split(/\s*[,;]\s*/)
-		smiles = items[0]
-		c = OpenTox::Compound.new(:smiles => smiles)
-		if c.inchi != ""
-			duplicates[c.inchi] = [] unless duplicates[c.inchi]
-			duplicates[c.inchi] << "Line #{line_nr}: " + line.chomp
-			compound_uri = c.uri
-			dataset.compounds << compound_uri
-			dataset.data[compound_uri] = [] unless dataset.data[compound_uri]
-			case items[1].to_s
-			when '1'
-				dataset.data[compound_uri] << {feature_uri => true }
-				nr_compounds += 1
-			when '0'
-				dataset.data[compound_uri] << {feature_uri => false }
-				nr_compounds += 1
-			else
-				activity_errors << "Line #{line_nr}: " + line.chomp
-			end
-		else
-			smiles_errors << "Line #{line_nr}: " + line.chomp
-		end
-		line_nr += 1
-	end
+
+  case params[:file][:type] 
+  when "application/csv", "text/csv", "text/plain"
+  	params[:file][:tempfile].each_line do |line|
+  		unless line.chomp.match(/^.+[,;].*$/) # check CSV format - not all browsers provide correct content-type
+  			flash[:notice] = "Please upload a CSV file created according to these #{link_to "instructions", "csv_format"}."
+  			redirect url_for('/create')
+  		end
+  		items = line.chomp.split(/\s*[,;]\s*/)
+  		smiles = items[0]
+  		c = OpenTox::Compound.new(:smiles => smiles)
+  		if c.inchi != ""
+  			duplicates[c.inchi] = [] unless duplicates[c.inchi]
+  			duplicates[c.inchi] << "Line #{line_nr}: " + line.chomp
+  			compound_uri = c.uri
+  			dataset.compounds << compound_uri
+  			dataset.data[compound_uri] = [] unless dataset.data[compound_uri]
+  			case items[1].to_s
+  			when '1'
+  				dataset.data[compound_uri] << {feature_uri => true }
+  				nr_compounds += 1
+  			when '0'
+  				dataset.data[compound_uri] << {feature_uri => false }
+  				nr_compounds += 1
+  			else
+  				activity_errors << "Line #{line_nr}: " + line.chomp
+  			end
+  		else
+  			smiles_errors << "Line #{line_nr}: " + line.chomp
+  		end
+  		line_nr += 1
+  	end	
+  when "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    require 'roo'
+    require 'ftools'
+    excel = 'tmp/' + params[:file][:filename]
+    name = params[:file][:filename]
+    File.mv(params[:file][:tempfile].path,excel)
+    if params[:file][:type] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"    
+      book = Excelx.new(excel)
+    else
+      book = Excel.new(excel)
+    end
+    book.default_sheet = 0
+    1.upto(book.last_row) do |row|
+      smiles = book.cell(row,1)
+      c = OpenTox::Compound.new(:smiles => smiles)
+      if c.inchi != ""
+    	duplicates[c.inchi] = [] unless duplicates[c.inchi]
+    	duplicates[c.inchi] << "Line #{line_nr}: " + smiles if smiles
+    	compound_uri = c.uri
+    			dataset.compounds << compound_uri
+    			dataset.data[compound_uri] = [] unless dataset.data[compound_uri]
+    			case book.cell(row,2).to_s
+    			when '1'
+    				dataset.data[compound_uri] << {feature_uri => true }
+    				nr_compounds += 1
+    			when '0'
+    				dataset.data[compound_uri] << {feature_uri => false }
+    				nr_compounds += 1
+    			else
+    				activity_errors << "Line #{line_nr}: " + smiles if smiles
+    			end
+    		else
+    			smiles_errors << "Line #{line_nr}: " + smiles if smiles
+    		end
+    		line_nr += 1
+    end
+  else
+    LOGGER.error "Fileupload (Excel) Error: " +  params[:file].inspect 
+  end	
 	dataset_uri = dataset.save 
 	task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :prediction_feature => feature_uri)
 	@model.task_uri = task_uri

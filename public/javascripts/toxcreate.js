@@ -10,8 +10,8 @@ $(function() {
         $("dd#model_" + id + "_warnings").slideUp("slow");
         $("a#show_model_" + id + "_warnings").html("show");
       }
+      return false;
     });
-    return false;
   };
 
   checkStati = function(stati) {
@@ -76,7 +76,16 @@ $(function() {
     return false;
   };
 
-
+  checkValidation = function() {
+    var reload_id = "";
+    $("input.model_validation").each(function(){
+        if($(this).val() != "Completed") {
+          reload_id = this.id.replace("model_validation_","");
+          if(/^\d+$/.test(reload_id)) loadModel(reload_id);
+        };
+    });
+    var validationCheck = setTimeout('checkValidation()',15000);
+  }
 });
 
 jQuery.fn.deleteModel = function(type, options) {
@@ -89,6 +98,7 @@ jQuery.fn.deleteModel = function(type, options) {
   var opts = $.extend(defaults, options);
   this.bind(opts.trigger_on, function() {
     if(confirm(opts.confirm_message)) {
+      $(opts.elem).fadeTo("slow",0.5);
       $.ajax({
          type: opts.method,
          url:  opts.action,

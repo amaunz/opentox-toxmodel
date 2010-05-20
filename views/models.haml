@@ -5,6 +5,8 @@
     if(#{stati != 0}) { 
       setTimeout('checkStati("#{stati_to_check}")',1500);
     }
+    var reload_validation = true;
+    if(reload_validation) setTimeout('checkValidation()',15000);
   });
 
 %p Get an overview about ToxCreate models. This page is refreshed every 15 seconds to update the model status.
