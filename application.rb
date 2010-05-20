@@ -296,7 +296,7 @@ post '/upload' do # create a new model
     	compound_uri = c.uri
     			dataset.compounds << compound_uri
     			dataset.data[compound_uri] = [] unless dataset.data[compound_uri]
-    			case book.cell(row,2).to_s
+    			case book.cell(row,2).to_i.to_s
     			when '1'
     				dataset.data[compound_uri] << {feature_uri => true }
     				nr_compounds += 1
