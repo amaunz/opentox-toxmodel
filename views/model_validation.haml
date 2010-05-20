@@ -31,18 +31,21 @@
         %dd
           %table
             %tr
-              %th
-              %th Measured
+              %td{:colspan => 2, :rowspan => 2}
+              -#%td
+              %th{:colspan => 2} Measured
             %tr
-              %th Predicted
-              %th active
-              %th inactive
+              -#%td{:colspan => 2}
+              -#%th Predicted
+              %th{:bgcolor => "#CCD2DC"} active
+              %th{:bgcolor => "#CCD2DC"} inactive
             %tr
-              %th active
+              %th{:rowspan => 2} Predicted
+              %th{:bgcolor => "#CCD2DC"} active
               %td= v[:tp]
               %td= v[:fp]
             %tr
-              %th inactive
+              %th{:bgcolor => "#CCD2DC"} inactive
               %td= v[:fn]
               %td= v[:tn]
   - else
