@@ -1,0 +1,64 @@
+= link_to "Back to model creation", '/create'
+%p
+  The Excel input file should contain a single spreadsheet with two columns. Enter in the first column the chemical structure in
+  %a{:href => "http://en.wikipedia.org/wiki/Simplified_molecular_input_line_entry_specification"} SMILES
+  format, in the second column the activity classification (1: active, 0: inactive), e.g.
+
+- n = 0
+
+.code
+  %table
+    %tr
+      %td
+      %th A
+      %th B
+    %tr
+      - n += 1
+      %th= n
+      %td CC(=O)Nc1ccc(O)cc1
+      %td 1  
+    %tr
+      - n += 1
+      %th= n
+      %td O=c1[nH]cnc2[nH]ncc12
+      %td 1  
+    %tr
+      - n += 1
+      %th= n
+      %td CCCCNc1cc(cc(c1Oc2ccccc2)S(=O)(=O)N)C(=O)O
+      %td 1  
+    %tr
+      - n += 1
+      %th= n
+      %td CC(C)(C)NCC(O)COc1cccc2NC(=O)CCc12
+      %td 1  
+    %tr
+      - n += 1
+      %th= n
+      %td CN(C)CCCC1(OCc2cc(C#N)ccc21)c3ccc(F)cc3
+      %td 1  
+    %tr
+      - n += 1
+      %th= n
+      %td CCC(CC)CCN1C(=O)CN=C(C2CCCCC2F)c3cc(Cl)ccc13
+      %td 0 
+    %tr
+      - n += 1
+      %th= n
+      %td CCN(CC)CC(=O)Nc1c(C)cccc1C
+      %td 0 
+    %tr
+      - n += 1
+      %th= n
+      %td CC(C)(C)NCC(O)COc1cccc2CC(O)C(O)Cc12
+      %td 0 
+    %tr
+      - n += 1
+      %th= n
+      %td CN1CCCC1c2cccnc2
+      %td 0 
+
+%p
+  Here is an example file for download:
+  = link_to "hamster_carcinogenicity.xls", "/hamster_carcinogenicity.xls"
+

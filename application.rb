@@ -222,6 +222,10 @@ get '/csv_format' do
 	haml :csv_format
 end
 
+get '/excel_format' do
+	haml :excel_format
+end
+
 get "/confidence" do
 	haml :confidence
 end

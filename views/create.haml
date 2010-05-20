@@ -4,7 +4,7 @@
     This service creates 
     %a{:href => 'http://lazar.in-silico.de'} lazar
     classification models (more model building algorithms will follow) from your uploaded datasets. Here are
-    = link_to "instructions", '/csv_format'
+    = link_to "instructions", '/excel_format'
     , for creating training datasets in Excel.
 
   %form{ :action => url_for('/upload'), :method => "post", :enctype => "multipart/form-data" }
@@ -18,6 +18,8 @@
       %br
       %label{:for => 'file'}
         2. Upload training data in
+        = link_to "Excel", '/excel_format'
+        or
         = link_to "CSV", '/csv_format'
         format:
       %input{:type => 'file', :name => 'file', :id => 'file', :size => '41'}
