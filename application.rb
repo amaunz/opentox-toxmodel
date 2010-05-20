@@ -25,7 +25,6 @@ class ToxCreateModel
 	property :created_at, DateTime
 
 	def status
-		##LOGGER.debug RestClient.get(File.join(@task_uri, 'hasStatus')).body
 		RestClient.get(File.join(@task_uri, 'hasStatus')).body
 	end
 
