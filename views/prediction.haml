@@ -35,14 +35,15 @@
             - if p[:confidence]
               %br
                 (
-                %a{:href => "#", :id => "linkConfidence"} Confidence
+                %a{:href => "#", :id => "linkConfidence#{p.object_id}"} Confidence
                 = ": #{sprintf('%.03f', p[:confidence].to_f.abs)})"
+                :javascript
+                  $("a#linkConfidence#{p.object_id}").click(function () {
+                    $("dl#confidence").toggle();  
+                  });
 
 %dl#confidence{ :style => "display: none;" }
   %dt Confidence:
   %dd Indicates the applicability domain of a model. Predictions with a high confidence can be expected to be more reliable than predictions with low confidence. Confidence values may take any value between 0 and 1. For most models confidence &gt; 0.025 is a sensible (hard) cutoff to distiguish between reliable and unreliable predictions.
-:javascript
-  $("a#linkConfidence").click(function () {
-    $("dl#confidence").toggle();  
-  });
+
 
