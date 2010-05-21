@@ -246,7 +246,7 @@ post '/upload' do # create a new model
 		redirect url_for('/create')
 	end
 	unless params[:endpoint] and params[:file] and params[:file][:tempfile]
-		flash[:notice] = "Please enter an endpoint name and upload a CSV file."
+		flash[:notice] = "Please enter an endpoint name and upload a Excel or CSV file."
 		redirect url_for('/create')
 	end
 	@model = ToxCreateModel.new
@@ -293,43 +293,56 @@ post '/upload' do # create a new model
   		line_nr += 1
   	end	
   when ".xls", ".xlsx"
-    excel = 'tmp/' + params[:file][:filename]
-    name = params[:file][:filename]
-    File.mv(params[:file][:tempfile].path,excel)
-    if File.extname(params[:file][:filename]) == ".xlsx"    
-      book = Excelx.new(excel)
-    else
-      book = Excel.new(excel)
-    end
-    book.default_sheet = 0
-    1.upto(book.last_row) do |row|
-      smiles = book.cell(row,1)
-      c = OpenTox::Compound.new(:smiles => smiles)
-      if c.inchi != ""
-    	duplicates[c.inchi] = [] unless duplicates[c.inchi]
-    	duplicates[c.inchi] << "Line #{line_nr}: " + smiles if smiles
-    	compound_uri = c.uri
-    			dataset.compounds << compound_uri
-    			dataset.data[compound_uri] = [] unless dataset.data[compound_uri]
-    			case book.cell(row,2).to_i.to_s
-    			when '1'
-    				dataset.data[compound_uri] << {feature_uri => true }
-    				nr_compounds += 1
-    			when '0'
-    				dataset.data[compound_uri] << {feature_uri => false }
-    				nr_compounds += 1
-    			else
-    				activity_errors << "Line #{line_nr}: " + smiles if smiles
-    			end
-    		else
-    			smiles_errors << "Line #{line_nr}: " + smiles if smiles
-    		end
-    		line_nr += 1
-    end
-    File.safe_unlink(excel)
+		begin
+			excel = 'tmp/' + params[:file][:filename]
+			name = params[:file][:filename]
+			File.mv(params[:file][:tempfile].path,excel)
+			if File.extname(params[:file][:filename]) == ".xlsx"    
+				book = Excelx.new(excel)
+			else
+				book = Excel.new(excel)
+			end
+			book.default_sheet = 0
+			1.upto(book.last_row) do |row|
+				smiles = book.cell(row,1)
+				c = OpenTox::Compound.new(:smiles => smiles)
+				if c.inchi != ""
+				duplicates[c.inchi] = [] unless duplicates[c.inchi]
+				duplicates[c.inchi] << "Line #{line_nr}: " + smiles if smiles
+				compound_uri = c.uri
+						dataset.compounds << compound_uri
+						dataset.data[compound_uri] = [] unless dataset.data[compound_uri]
+						case book.cell(row,2).to_i.to_s
+						when '1'
+							dataset.data[compound_uri] << {feature_uri => true }
+							nr_compounds += 1
+						when '0'
+							dataset.data[compound_uri] << {feature_uri => false }
+							nr_compounds += 1
+						else
+							activity_errors << "Line #{line_nr}: " + smiles if smiles
+						end
+					else
+						smiles_errors << "Line #{line_nr}: " + smiles if smiles
+					end
+					line_nr += 1
+			end
+			File.safe_unlink(excel)
+		rescue
+			flash[:notice] = "Please upload a Excel file created according to these #{link_to "instructions", "excel_format"}."
+			redirect url_for('/create')
+		end
   else
-    LOGGER.error "Fileupload (Excel) Error: " +  params[:file].inspect 
+    LOGGER.error "File upload error: " +  params[:file].inspect 
+		flash[:notice] = File.extname(params[:file][:filename]) + "is not a valid file extension. Please create an input file according to the instructions for #{link_to "Excel", "excel_format"} or #{link_to "CSV", "csv_format"}."
+		redirect url_for('/create')
   end	
+
+	if nr_compounds < 10
+		flash[:notice] = "Too few compounds to create a prediction model."
+		redirect url_for('/create')
+	end
+
 	dataset_uri = dataset.save 
 	task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :prediction_feature => feature_uri)
 	@model.task_uri = task_uri
@@ -411,6 +424,10 @@ delete '/?' do
 	response['Content-Type'] = 'text/plain'
 	"All Models deleted."
 end
+
+#get '/error' do
+#	fail "testing mail delivery"
+#end
 
 # SASS stylesheet
 get '/stylesheets/style.css' do
