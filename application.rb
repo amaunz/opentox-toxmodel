@@ -312,7 +312,8 @@ post '/upload' do # create a new model
 				compound_uri = c.uri
 						dataset.compounds << compound_uri
 						dataset.data[compound_uri] = [] unless dataset.data[compound_uri]
-						case book.cell(row,2).to_i.to_s
+						#case book.cell(row,2).to_i.to_s # reads also floats
+						case book.cell(row,2).to_s
 						when '1'
 							dataset.data[compound_uri] << {feature_uri => true }
 							nr_compounds += 1
@@ -329,17 +330,17 @@ post '/upload' do # create a new model
 			end
 			File.safe_unlink(excel)
 		rescue
-			flash[:notice] = "Please upload a Excel file created according to these #{link_to "instructions", "excel_format"}."
+			flash[:notice] = "Please upload a Excel file created according to these #{link_to "instructions", "/excel_format"}."
 			redirect url_for('/create')
 		end
   else
     LOGGER.error "File upload error: " +  params[:file].inspect 
-		flash[:notice] = File.extname(params[:file][:filename]) + "is not a valid file extension. Please create an input file according to the instructions for #{link_to "Excel", "excel_format"} or #{link_to "CSV", "csv_format"}."
+		flash[:notice] = File.extname(params[:file][:filename]) + "is not a valid file extension. Please create an input file according to the instructions for #{link_to "Excel", "/excel_format"} or #{link_to "CSV", "/csv_format"}."
 		redirect url_for('/create')
   end	
 
 	if nr_compounds < 10
-		flash[:notice] = "Too few compounds to create a prediction model."
+		flash[:notice] = "Too few compounds to create a prediction model. Did you provide compounds in SMILES format and classification activities as 0 and 1 as described in the #{link_to "instructions", "/excel_format"}? As a rule of thumb you will need at least 100 training compounds for nongeneric datasets. A lower number could be sufficient for congeneric datasets."
 		redirect url_for('/create')
 	end
 
