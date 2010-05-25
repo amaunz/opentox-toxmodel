@@ -4,9 +4,11 @@
     This service creates 
     %a{:href => 'http://lazar.in-silico.de'} lazar
     %em classification
-    models (regression models and further modelling algorithms will be added in future versions) from your uploaded datasets. Here are
+    models (i.e. models that discriminate between toxic/nontoxic compounds) from your uploaded datasets. Here are
     = link_to "instructions", '/excel_format'
     , for creating training datasets in Excel.
+  %p
+    Facilities to create models for quantitative values (e.g. LC50s) and further modelling algorithms will be added in future versions.
 
   %form{ :action => url_for('/upload'), :method => "post", :enctype => "multipart/form-data" }
     %fieldset

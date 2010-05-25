@@ -30,7 +30,8 @@
     - if model.status == 'Completed'
       %dt Algorithm:
       %dd
-        %a{:href => model.algorithm} #{File.basename model.algorithm}
+        %a{:href => "http://www.in-silico.de/articles/modi020905.pdf"} #{File.basename model.algorithm}
+        -# %a{:href => model.algorithm} RDF/XML
       %dt Descriptors:
       %dd
         %a{:href => 'http://www.maunz.de/libfminer2-bbrc-doc/'} Fminer backbone refinement classes

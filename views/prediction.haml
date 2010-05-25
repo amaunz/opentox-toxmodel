@@ -21,7 +21,15 @@
               - elsif activity(a) == 'inactive'
                 .inactive
                   = activity(a)
-            %br (training data)
+            %br
+              (
+              %a{:href => "#", :id => "linkTrainingData#{p.object_id}"} Training data
+              :javascript
+                $("a#linkTrainingData#{p.object_id}").click(function () {
+                  $("dl#training_data").toggle();  
+                });
+              )
+
           - else
             - if activity(p[:prediction]) == 'active'
               .active
@@ -36,14 +44,20 @@
               %br
                 (
                 %a{:href => "#", :id => "linkConfidence#{p.object_id}"} Confidence
-                = ": #{sprintf('%.03f', p[:confidence].to_f.abs)})"
+                = ": #{sprintf('%.03f', p[:confidence].to_f.abs)}"
                 :javascript
                   $("a#linkConfidence#{p.object_id}").click(function () {
                     $("dl#confidence").toggle();  
                   });
+                )
 
 %dl#confidence{ :style => "display: none;" }
   %dt Confidence:
   %dd Indicates the applicability domain of a model. Predictions with a high confidence can be expected to be more reliable than predictions with low confidence. Confidence values may take any value between 0 and 1. For most models confidence &gt; 0.025 is a sensible (hard) cutoff to distiguish between reliable and unreliable predictions.
+
+
+%dl#training_data{ :style => "display: none;" }
+  %dt Training data:
+  %dd Experimental result(s) from the training dataset are displayed here. 
 
 
