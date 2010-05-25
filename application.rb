@@ -345,7 +345,12 @@ post '/upload' do # create a new model
 	end
 
 	dataset_uri = dataset.save 
-	task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :prediction_feature => feature_uri)
+	begin
+		task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :prediction_feature => feature_uri)
+		flash[:notice] = "Model creation failed. Please check if the input file is in a valid #{link_to "Excel", "/excel_format"} or #{link_to "CSV", "/csv_format"} format."
+		redirect url_for('/create')
+	rescue
+	end
 	@model.task_uri = task_uri
 
 	unless @@config[:services]["opentox-model"].match(/localhost/)
