@@ -140,11 +140,14 @@ get '/models/?' do
 		end
 		unless @@config[:services]["opentox-model"].match(/localhost/)
 			if !model.validation_uri and model.validation_status == "Completed"
-				model.validation_uri = RestClient.get(File.join(model.validation_task_uri, 'resultURI')).body
-				LOGGER.debug "Validation URI: #{model.validation_uri}"
-				model.validation_report_task_uri = RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => model.validation_uri).body
-				LOGGER.debug "Validation Report Task URI: #{model.validation_report_task_uri}"
-				model.save
+				begin
+					model.validation_uri = RestClient.get(File.join(model.validation_task_uri, 'resultURI')).body
+					LOGGER.debug "Validation URI: #{model.validation_uri}"
+					model.validation_report_task_uri = RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => model.validation_uri).body
+					LOGGER.debug "Validation Report Task URI: #{model.validation_report_task_uri}"
+					model.save
+				rescue
+				end
 			end
 			if model.validation_report_task_uri and !model.validation_report_uri and model.validation_report_status == 'Completed'
 				model.validation_report_uri = RestClient.get(File.join(model.validation_report_task_uri, 'resultURI')).body
@@ -347,9 +350,9 @@ post '/upload' do # create a new model
 	dataset_uri = dataset.save 
 	begin
 		task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :prediction_feature => feature_uri)
+	rescue
 		flash[:notice] = "Model creation failed. Please check if the input file is in a valid #{link_to "Excel", "/excel_format"} or #{link_to "CSV", "/csv_format"} format."
 		redirect url_for('/create')
-	rescue
 	end
 	@model.task_uri = task_uri
 
