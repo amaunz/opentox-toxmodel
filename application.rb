@@ -316,11 +316,11 @@ post '/upload' do # create a new model
 						dataset.compounds << compound_uri
 						dataset.data[compound_uri] = [] unless dataset.data[compound_uri]
 						#case book.cell(row,2).to_i.to_s # reads also floats
-						case book.cell(row,2).to_s
-						when '1'
+						case book.cell(row,2)
+						when 1.0
 							dataset.data[compound_uri] << {feature_uri => true }
 							nr_compounds += 1
-						when '0'
+						when 0.0
 							dataset.data[compound_uri] << {feature_uri => false }
 							nr_compounds += 1
 						else
