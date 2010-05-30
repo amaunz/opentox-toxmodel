@@ -183,12 +183,12 @@ end
 get '/model/:id/?' do
   response['Content-Type'] = 'text/plain'
 	model = ToxCreateModel.get(params[:id])
-  if !model.uri and model.status == "Completed"
+  if model and !model.uri and model.status == "Completed"
 	  model.uri = RestClient.get(File.join(model.task_uri, 'resultURI')).body
 	  model.save
   end
 	unless @@config[:services]["opentox-model"].match(/localhost/)
-		if !model.validation_uri and model.validation_status == "Completed"
+		if model and !model.validation_uri and model.validation_status == "Completed"
 			model.validation_uri = RestClient.get(File.join(model.validation_task_uri, 'resultURI')).body
 			LOGGER.debug "Validation URI: #{model.validation_uri}"
 			model.validation_report_task_uri = RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => model.validation_uri).body
