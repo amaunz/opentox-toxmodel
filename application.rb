@@ -26,6 +26,7 @@ class ToxCreateModel
 	property :warnings, Text, :length => 2**32-1 
 	property :nr_compounds, Integer
 	property :created_at, DateTime
+	property :classification, Boolean
 
 	def status
 		RestClient.get(File.join(@task_uri, 'hasStatus')).body
