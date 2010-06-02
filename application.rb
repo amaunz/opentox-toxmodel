@@ -255,6 +255,7 @@ post '/upload' do # create a new model
 	end
 	@model = ToxCreateModel.new
 	@model.name = params[:endpoint]
+	@model.classification = true;
 	dataset = OpenTox::Dataset.new
 	dataset.title = params[:endpoint]
 	feature_uri = url_for("/feature#"+URI.encode(params[:endpoint]), :full)
@@ -289,6 +290,7 @@ post '/upload' do # create a new model
   				dataset.data[compound_uri] << {feature_uri => false }
   				nr_compounds += 1
   			else
+				@model.classification = false;
   				activity_errors << "Line #{line_nr}: " + line.chomp
   			end
   		else
@@ -325,6 +327,7 @@ post '/upload' do # create a new model
 							dataset.data[compound_uri] << {feature_uri => false }
 							nr_compounds += 1
 						else
+							@model.classification = false;
 							activity_errors << "Line #{line_nr}: " + smiles if smiles
 						end
 					else
