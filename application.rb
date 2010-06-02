@@ -26,7 +26,6 @@ class ToxCreateModel
 	property :warnings, Text, :length => 2**32-1 
 	property :nr_compounds, Integer
 	property :created_at, DateTime
-	property :classification, Boolean
 
 	def status
 		RestClient.get(File.join(@task_uri, 'hasStatus')).body
@@ -255,7 +254,7 @@ post '/upload' do # create a new model
 	end
 	@model = ToxCreateModel.new
 	@model.name = params[:endpoint]
-	@model.classification = true;
+	classification = true;
 	dataset = OpenTox::Dataset.new
 	dataset.title = params[:endpoint]
 	feature_uri = url_for("/feature#"+URI.encode(params[:endpoint]), :full)
@@ -290,7 +289,7 @@ post '/upload' do # create a new model
   				dataset.data[compound_uri] << {feature_uri => false }
   				nr_compounds += 1
   			else
-				@model.classification = false;
+				classification = false;
   				activity_errors << "Line #{line_nr}: " + line.chomp
   			end
   		else
@@ -327,7 +326,7 @@ post '/upload' do # create a new model
 							dataset.data[compound_uri] << {feature_uri => false }
 							nr_compounds += 1
 						else
-							@model.classification = false;
+							classification = false;
 							activity_errors << "Line #{line_nr}: " + smiles if smiles
 						end
 					else
@@ -353,7 +352,7 @@ post '/upload' do # create a new model
 
 	dataset_uri = dataset.save 
 	begin
-		task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :prediction_feature => feature_uri)
+		task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :prediction_feature => feature_uri, :classification => classification)
 	rescue
 		flash[:notice] = "Model creation failed. Please check if the input file is in a valid #{link_to "Excel", "/excel_format"} or #{link_to "CSV", "/csv_format"} format."
 		redirect url_for('/create')
