@@ -290,6 +290,7 @@ post '/upload' do # create a new model
   			else	
 				# AM: handle quantitative values
 				dataset.data[compound_uri] << {feature_uri => items[1].to_f}
+  				nr_compounds += 1
   			end
   		else
   			smiles_errors << "Line #{line_nr}: " + line.chomp
