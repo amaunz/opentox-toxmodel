@@ -254,7 +254,6 @@ post '/upload' do # create a new model
 	end
 	@model = ToxCreateModel.new
 	@model.name = params[:endpoint]
-	classification = true;
 	dataset = OpenTox::Dataset.new
 	dataset.title = params[:endpoint]
 	feature_uri = url_for("/feature#"+URI.encode(params[:endpoint]), :full)
@@ -288,9 +287,9 @@ post '/upload' do # create a new model
   			when '0'
   				dataset.data[compound_uri] << {feature_uri => false }
   				nr_compounds += 1
-  			else
-				classification = false;
-  				activity_errors << "Line #{line_nr}: " + line.chomp
+  			else	
+				# AM: handle quantitative values
+				dataset.data[compound_uri] << {feature_uri => items[1].to_f}
   			end
   		else
   			smiles_errors << "Line #{line_nr}: " + line.chomp
@@ -326,7 +325,6 @@ post '/upload' do # create a new model
 							dataset.data[compound_uri] << {feature_uri => false }
 							nr_compounds += 1
 						else
-							classification = false;
 							activity_errors << "Line #{line_nr}: " + smiles if smiles
 						end
 					else
@@ -346,13 +344,13 @@ post '/upload' do # create a new model
   end	
 
 	if nr_compounds < 10
-		flash[:notice] = "Too few compounds to create a prediction model. Did you provide compounds in SMILES format and classification activities as 0 and 1 as described in the #{link_to "instructions", "/excel_format"}? As a rule of thumb you will need at least 100 training compounds for nongeneric datasets. A lower number could be sufficient for congeneric datasets."
+		flash[:notice] = "Too few compounds to create a prediction model. Did you provide compounds in SMILES format and classification activities as described in the #{link_to "instructions", "/excel_format"}? As a rule of thumb you will need at least 100 training compounds for nongeneric datasets. A lower number could be sufficient for congeneric datasets."
 		redirect url_for('/create')
 	end
 
 	dataset_uri = dataset.save 
 	begin
-		task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :prediction_feature => feature_uri, :classification => classification)
+		task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :prediction_feature => feature_uri)
 	rescue
 		flash[:notice] = "Model creation failed. Please check if the input file is in a valid #{link_to "Excel", "/excel_format"} or #{link_to "CSV", "/csv_format"} format."
 		redirect url_for('/create')
