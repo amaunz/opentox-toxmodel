@@ -1,53 +1,54 @@
-%dt
-  Validation:
-  %input{ :id => "model_validation_#{model.id}", :type => "hidden", :value => "#{model.validation_status}", :class => "model_validation" }
-  - if model.validation_report_uri
-    %a{:href => model.validation_report_uri, :target => "_blank"} (more details)
-%dd
-  - if model.validation_uri
-    - v = model.validation
-    - if v == "Service not available"
-      = v
+%dl{:id => "model_validation_#{model.id}"}
+  %dt
+    Validation:
+    %input{ :id => "model_validation_#{model.id}", :type => "hidden", :value => "#{model.validation_status}", :class => "model_validation" }
+    - if model.validation_report_uri
+      %a{:href => model.validation_report_uri, :target => "_blank"} (more details)
+  %dd
+    - if model.validation_uri
+      - v = model.validation
+      - if v == "Service not available"
+        = v
+      - else
+        %dl
+          %dt Number of predictions:
+          %dd= v[:n]
+          %dt Correct predictions:
+          %dd
+            = v[:correct_predictions]
+            = '%'
+          %dt
+            %a{:href => "http://en.wikipedia.org/wiki/Receiver_operating_characteristic", :target => "_blank"} Weighted area under ROC:
+          %dd 
+            = v[:weighted_area_under_roc]
+          %dt
+            %a{:href => "http://en.wikipedia.org/wiki/Sensitivity_and_specificity", :target => "_blank"} Specificity:
+          %dd= v[:specificity]
+          %dt
+            %a{:href => "http://en.wikipedia.org/wiki/Sensitivity_and_specificity", :target => "_blank"} Sensitivity:
+          %dd= v[:sensitivity]
+          %dt
+            %a{:href => "http://en.wikipedia.org/wiki/Confusion_matrix", :target => "_blank"} Confusion Matrix:
+          %dd
+            %table
+              %tr
+                %td{:colspan => 2, :rowspan => 2}
+                -#%td
+                %th{:colspan => 2} Measured
+              %tr
+                -#%td{:colspan => 2}
+                -#%th Predicted
+                %th{:bgcolor => "#CCD2DC"} active
+                %th{:bgcolor => "#CCD2DC"} inactive
+              %tr
+                %th{:rowspan => 2} Predicted
+                %th{:bgcolor => "#CCD2DC"} active
+                %td= v[:tp]
+                %td= v[:fp]
+              %tr
+                %th{:bgcolor => "#CCD2DC"} inactive
+                %td= v[:fn]
+                %td= v[:tn]
     - else
-      %dl
-        %dt Number of predictions:
-        %dd= v[:n]
-        %dt Correct predictions:
-        %dd
-          = v[:correct_predictions]
-          = '%'
-        %dt
-          %a{:href => "http://en.wikipedia.org/wiki/Receiver_operating_characteristic", :target => "_blank"} Weighted area under ROC:
-        %dd 
-          = v[:weighted_area_under_roc]
-        %dt
-          %a{:href => "http://en.wikipedia.org/wiki/Sensitivity_and_specificity", :target => "_blank"} Specificity:
-        %dd= v[:specificity]
-        %dt
-          %a{:href => "http://en.wikipedia.org/wiki/Sensitivity_and_specificity", :target => "_blank"} Sensitivity:
-        %dd= v[:sensitivity]
-        %dt
-          %a{:href => "http://en.wikipedia.org/wiki/Confusion_matrix", :target => "_blank"} Confusion Matrix:
-        %dd
-          %table
-            %tr
-              %td{:colspan => 2, :rowspan => 2}
-              -#%td
-              %th{:colspan => 2} Measured
-            %tr
-              -#%td{:colspan => 2}
-              -#%th Predicted
-              %th{:bgcolor => "#CCD2DC"} active
-              %th{:bgcolor => "#CCD2DC"} inactive
-            %tr
-              %th{:rowspan => 2} Predicted
-              %th{:bgcolor => "#CCD2DC"} active
-              %td= v[:tp]
-              %td= v[:fp]
-            %tr
-              %th{:bgcolor => "#CCD2DC"} inactive
-              %td= v[:fn]
-              %td= v[:tn]
-  - else
-    = image_tag("/snake_transparent.gif") if model.validation_status == "Running"
-    %a{:href => model.validation_task_uri} #{model.validation_status}
+      = image_tag("/snake_transparent.gif") if model.validation_status == "Running"
+      %a{:href => model.validation_task_uri} #{model.validation_status}

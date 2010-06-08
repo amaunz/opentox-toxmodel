@@ -8,52 +8,53 @@
 %div{:id => "model_#{model.id}"}  
   %h2
     = model.name
-  %dl
-    %dt Status:
-    %dd
-      %span{:id => "model_#{model.id}_status", :class => model.status}
-        = haml :model_status, :locals=>{:model=>model}, :layout => false 
-      (
-      %a{:href => url_for("/model/#{model.id}"), :id => "delete_#{model.id}", :class => 'delete'} delete
-      )
-    %dt Started:
-    %dd= model.created_at.strftime("%m/%d/%Y - %I:%M:%S%p")
-    %dt Training compounds:
-    %dd= model.nr_compounds
-    %dt Warnings:
-    - if model.warnings == ''
-      %dd -
-    - else
-      %a{:href => "#", :id => "show_model_#{model.id}_warnings"} show
-      %dd{:id => "model_#{model.id}_warnings", :style => "display: none;"}= model.warnings
-
-    - if model.status == 'Completed'
-      %dt Algorithm:
+  .model
+    %dl
+      %dt Status:
       %dd
-        %a{:href => "http://www.in-silico.de/articles/modi020905.pdf"} #{File.basename model.algorithm}
-        -# %a{:href => model.algorithm} RDF/XML
-      %dt Descriptors:
-      %dd
-        %a{:href => 'http://www.maunz.de/libfminer2-bbrc-doc/'} Fminer backbone refinement classes
-      %dt Training dataset:
-      %dd
-        %a{:href => "#{model.training_dataset}.xls"} Excel sheet
-        ,
-        %a{:href => "#{model.training_dataset}.rdf"} RDF/XML
-        %em (experts) ,
-        %a{:href => "#{model.training_dataset}.yaml"} YAML
-        %em  (experts)
-      %dt Feature dataset:
-      %dd
-        %a{:href => "#{model.feature_dataset}.rdf"} RDF/XML
-        ,
-        %a{:href => "#{model.feature_dataset}.yaml"} YAML
-        %em  (experts, dataset too large for Excel)
-      %dt Model:
-      %dd
-        %a{:href => "#{model.uri}.rdf"} RDF/XML
-        ,
-        %a{:href => "#{model.uri}.yaml"} YAML
-        %em  (experts, models cannot be exported in Excel)
-      = haml :model_validation, :locals=>{:model=>model}, :layout => false     
-        
+        %span{:id => "model_#{model.id}_status", :class => model.status}
+          = haml :model_status, :locals=>{:model=>model}, :layout => false 
+        (
+        %a{:href => url_for("/model/#{model.id}"), :id => "delete_#{model.id}", :class => 'delete'} delete
+        )
+      %dt Started:
+      %dd= model.created_at.strftime("%m/%d/%Y - %I:%M:%S%p")
+      %dt Training compounds:
+      %dd= model.nr_compounds
+      %dt Warnings:
+      - if model.warnings == ''
+        %dd -
+      - else
+        %a{:href => "#", :id => "show_model_#{model.id}_warnings"} show
+        %dd{:id => "model_#{model.id}_warnings", :style => "display: none;"}= model.warnings
+  
+      - if model.status == 'Completed'
+        %dt Algorithm:
+        %dd
+          %a{:href => "http://www.in-silico.de/articles/modi020905.pdf"} #{File.basename model.algorithm}
+          -# %a{:href => model.algorithm} RDF/XML
+        %dt Descriptors:
+        %dd
+          %a{:href => 'http://www.maunz.de/libfminer2-bbrc-doc/'} Fminer backbone refinement classes
+        %dt Training dataset:
+        %dd
+          %a{:href => "#{model.training_dataset}.xls"} Excel sheet
+          ,
+          %a{:href => "#{model.training_dataset}.rdf"} RDF/XML
+          %em (experts) ,
+          %a{:href => "#{model.training_dataset}.yaml"} YAML
+          %em  (experts)
+        %dt Feature dataset:
+        %dd
+          %a{:href => "#{model.feature_dataset}.rdf"} RDF/XML
+          ,
+          %a{:href => "#{model.feature_dataset}.yaml"} YAML
+          %em  (experts, dataset too large for Excel)
+        %dt Model:
+        %dd
+          %a{:href => "#{model.uri}.rdf"} RDF/XML
+          ,
+          %a{:href => "#{model.uri}.yaml"} YAML
+          %em  (experts, models cannot be exported in Excel)
+        = haml :model_validation, :locals=>{:model=>model}, :layout => false     
+          

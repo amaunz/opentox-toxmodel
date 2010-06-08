@@ -125,16 +125,8 @@ helpers do
 		act
 	end
 
-end
-
-get '/?' do
-	redirect url_for('/create')
-end
-
-get '/models/?' do
-	@models = ToxCreateModel.all(:order => [ :created_at.desc ])
-	@models.each do |model|
-		if !model.uri and model.status == "Completed"
+  def process_model(model)
+    if !model.uri and model.status == "Completed"
 			model.uri = RestClient.get(File.join(model.task_uri, 'resultURI')).body
 			model.save
 		end
@@ -153,6 +145,17 @@ get '/models/?' do
 				model.validation_report_uri = RestClient.get(File.join(model.validation_report_task_uri, 'resultURI')).body
 			end
 		end
+  end
+end
+
+get '/?' do
+	redirect url_for('/create')
+end
+
+get '/models/?' do
+	@models = ToxCreateModel.all(:order => [ :created_at.desc ])
+	@models.each do |model|
+		process_model(model)
 	end
 	haml :models
 end
@@ -180,28 +183,20 @@ get '/model/:id/status/?' do
 	end
 end
 
-get '/model/:id/?' do
+get '/model/:id/:view/?' do
   response['Content-Type'] = 'text/plain'
 	model = ToxCreateModel.get(params[:id])
-  if !model.uri and model.status == "Completed"
-	  model.uri = RestClient.get(File.join(model.task_uri, 'resultURI')).body
-	  model.save
-  end
-	unless @@config[:services]["opentox-model"].match(/localhost/)
-		if !model.validation_uri and model.validation_status == "Completed"
-			model.validation_uri = RestClient.get(File.join(model.validation_task_uri, 'resultURI')).body
-			LOGGER.debug "Validation URI: #{model.validation_uri}"
-			model.validation_report_task_uri = RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => model.validation_uri).body
-			LOGGER.debug "Validation Report Task URI: #{model.validation_report_task_uri}"
-			model.save
-		end
-		if model.validation_report_task_uri and !model.validation_report_uri and model.validation_report_status == 'Completed'
-			model.validation_report_uri = RestClient.get(File.join(model.validation_report_task_uri, 'resultURI')).body
-		end
-	end
+  process_model(model)
 
   begin
-		haml :model, :locals=>{:model=>model}, :layout => false
+    case params[:view]
+      when "model"
+		    haml :model, :locals=>{:model=>model}, :layout => false
+		  when "validation"
+		    haml :model_validation, :locals=>{:model=>model}, :layout => false
+		  else
+		    return "render error"
+		end
 	rescue
     return "unable to render model"
 	end
@@ -315,12 +310,11 @@ post '/upload' do # create a new model
 				compound_uri = c.uri
 						dataset.compounds << compound_uri
 						dataset.data[compound_uri] = [] unless dataset.data[compound_uri]
-						#case book.cell(row,2).to_i.to_s # reads also floats
 						case book.cell(row,2)
-						when 1.0
+						when 1, 1.0, "1" 
 							dataset.data[compound_uri] << {feature_uri => true }
 							nr_compounds += 1
-						when 0.0
+						when 0, 0.0, "0"
 							dataset.data[compound_uri] << {feature_uri => false }
 							nr_compounds += 1
 						else
