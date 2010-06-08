@@ -108,6 +108,7 @@ jQuery.fn.deleteModel = function(type, options) {
          },
          success: function(data) {         
            $(opts.elem).fadeTo("slow",0).slideUp("slow");
+           $(opts.elem).remove();
          },
          error: function(data) {
            //alert("model delete error!");
