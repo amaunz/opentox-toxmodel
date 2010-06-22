@@ -282,8 +282,10 @@ post '/upload' do # create a new model
   			when '0'
   				dataset.data[compound_uri] << {feature_uri => false }
   				nr_compounds += 1
-  			else
-  				activity_errors << "Line #{line_nr}: " + line.chomp
+  			else	
+				# AM: handle quantitative values
+				dataset.data[compound_uri] << {feature_uri => items[1].to_f}
+  				nr_compounds += 1
   			end
   		else
   			smiles_errors << "Line #{line_nr}: " + line.chomp
@@ -337,7 +339,7 @@ post '/upload' do # create a new model
   end	
 
 	if nr_compounds < 10
-		flash[:notice] = "Too few compounds to create a prediction model. Did you provide compounds in SMILES format and classification activities as 0 and 1 as described in the #{link_to "instructions", "/excel_format"}? As a rule of thumb you will need at least 100 training compounds for nongeneric datasets. A lower number could be sufficient for congeneric datasets."
+		flash[:notice] = "Too few compounds to create a prediction model. Did you provide compounds in SMILES format and classification activities as described in the #{link_to "instructions", "/excel_format"}? As a rule of thumb you will need at least 100 training compounds for nongeneric datasets. A lower number could be sufficient for congeneric datasets."
 		redirect url_for('/create')
 	end
 
