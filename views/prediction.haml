@@ -21,6 +21,8 @@
               - elsif activity(a) == 'inactive'
                 .inactive
                   = activity(a)
+              - else
+                = a
             %br
               (
               %a{:href => "#", :id => "linkTrainingData#{p.object_id}"} Training data

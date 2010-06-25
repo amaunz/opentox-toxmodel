@@ -5,148 +5,15 @@ gem "opentox-ruby-api-wrapper", "= 1.5.6"
 require 'opentox-ruby-api-wrapper'
 gem 'sinatra-static-assets'
 require 'sinatra/static_assets'
-require 'spreadsheet'
-require 'roo'
 require 'ftools'
+require File.join(File.dirname(__FILE__),'model.rb')
+require File.join(File.dirname(__FILE__),'helper.rb')
+require File.join(File.dirname(__FILE__),'parser.rb')
+
 LOGGER.progname = File.expand_path __FILE__
 
 use Rack::Flash
 set :sessions, true
-
-class ToxCreateModel
-	include DataMapper::Resource
-	property :id, Serial
-	property :name, String, :length => 255
-	property :uri, String, :length => 255
-	property :task_uri, String, :length => 255
-	property :validation_task_uri, String, :length => 255
-	property :validation_uri, String, :length => 255
-	property :validation_report_task_uri, String, :length => 255
-	property :validation_report_uri, String, :length => 255
-	property :warnings, Text, :length => 2**32-1 
-	property :nr_compounds, Integer
-	property :created_at, DateTime
-
-	def status
-		RestClient.get(File.join(@task_uri, 'hasStatus')).body
-	end
-
-	def validation_status
-		begin
-			RestClient.get(File.join(@validation_task_uri, 'hasStatus')).body
-		rescue
-			"Service offline"
-		end
-	end
-
-	def validation_report_status
-		begin
-			RestClient.get(File.join(@validation_report_task_uri, 'hasStatus')).body
-		rescue
-			"Service offline"
-		end
-	end
-
-	def algorithm
-		begin
-			RestClient.get(File.join(@uri, 'algorithm')).body
-		rescue
-			""
-		end
-	end
-
-	def training_dataset
-		begin
-			RestClient.get(File.join(@uri, 'trainingDataset')).body
-		rescue
-			""
-		end
-	end
-
-	def feature_dataset
-		begin
-			RestClient.get(File.join(@uri, 'feature_dataset')).body
-		rescue
-			""
-		end
-	end
-
-	def validation
-		begin
-			uri = File.join(@validation_uri, 'statistics')
-			yaml = RestClient.get(uri).body
-			v = YAML.load(yaml)
-			tp=0; tn=0; fp=0; fn=0; n=0
-			v[:classification_statistics][:confusion_matrix][:confusion_matrix_cell].each do |cell|
-				if cell[:confusion_matrix_predicted] == "true" and cell[:confusion_matrix_actual] == "true"
-					tp = cell[:confusion_matrix_value]
-					n += tp
-				elsif cell[:confusion_matrix_predicted] == "false" and cell[:confusion_matrix_actual] == "false"
-					tn = cell[:confusion_matrix_value]
-					n += tn
-				elsif cell[:confusion_matrix_predicted] == "false" and cell[:confusion_matrix_actual] == "true"
-					fn = cell[:confusion_matrix_value]
-					n += fn
-				elsif cell[:confusion_matrix_predicted] == "true" and cell[:confusion_matrix_actual] == "false"
-					fp = cell[:confusion_matrix_value]
-					n += fp
-				end
-			end
-			{
-				:n => n,
-				:tp => tp,
-				:fp => fp,
-				:tn => tn,
-				:fn => fn, 
-				:correct_predictions => sprintf("%.2f", 100*(tp+tn).to_f/n),
-				:weighted_area_under_roc => sprintf("%.3f", v[:classification_statistics][:weighted_area_under_roc].to_f),
-				:sensitivity => sprintf("%.3f", tp.to_f/(tp+fn)),
-				:specificity => sprintf("%.3f", tn.to_f/(tn+fp))
-			}
-		rescue
-			"Service offline"
-		end
-	end
-
-end
-
-DataMapper.auto_upgrade!
-
-helpers do
-	def activity(a)
-		case a.to_s
-		when "true"
-			act = "active"
-		when "false"
-			act = "inactive"
-		else
-			act = "not available"
-		end
-		act
-	end
-
-  def process_model(model)
-    if !model.uri and model.status == "Completed"
-			model.uri = RestClient.get(File.join(model.task_uri, 'resultURI')).body
-			model.save
-		end
-		unless @@config[:services]["opentox-model"].match(/localhost/)
-			if !model.validation_uri and model.validation_status == "Completed"
-				begin
-					model.validation_uri = RestClient.get(File.join(model.validation_task_uri, 'resultURI')).body
-					LOGGER.debug "Validation URI: #{model.validation_uri}"
-					model.validation_report_task_uri = RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => model.validation_uri).body
-					LOGGER.debug "Validation Report Task URI: #{model.validation_report_task_uri}"
-					model.save
-				rescue
-				end
-			end
-			if model.validation_report_task_uri and !model.validation_report_uri and model.validation_report_status == 'Completed'
-				model.validation_report_uri = RestClient.get(File.join(model.validation_report_task_uri, 'resultURI')).body
-			end
-		end
-  end
-end
 
 get '/?' do
 	redirect url_for('/create')
@@ -228,17 +95,8 @@ get "/confidence" do
 	haml :confidence
 end
 
-get '/tasks' do
-	@tasks = OpenTox::Task.all
-	haml :tasks
-end
-
-get '/task' do
-	@task = OpenTox::Task.find(session[:task_uri])
-	haml :task
-end
-
 post '/upload' do # create a new model
+
 	if params[:endpoint] == ''
 		flash[:notice] = "Please enter an endpoint name."
 		redirect url_for('/create')
@@ -247,143 +105,62 @@ post '/upload' do # create a new model
 		flash[:notice] = "Please enter an endpoint name and upload a Excel or CSV file."
 		redirect url_for('/create')
 	end
+
 	@model = ToxCreateModel.new
 	@model.name = params[:endpoint]
-	dataset = OpenTox::Dataset.new
-	dataset.title = params[:endpoint]
 	feature_uri = url_for("/feature#"+URI.encode(params[:endpoint]), :full)
-	dataset.features << feature_uri
-	smiles_errors = []
-	activity_errors = []
-	duplicates = {}
-	nr_compounds = 0
-	line_nr = 1
+	parser = Parser.new params[:file], feature_uri
 
-  case File.extname(params[:file][:filename]) 
-  when ".csv"
-  	params[:file][:tempfile].each_line do |line|
-  		unless line.chomp.match(/^.+[,;].*$/) # check CSV format - not all browsers provide correct content-type
-  			flash[:notice] = "Please upload a CSV file created according to these #{link_to "instructions", "csv_format"}."
-  			redirect url_for('/create')
-  		end
-  		items = line.chomp.split(/\s*[,;]\s*/)
-  		smiles = items[0]
-  		c = OpenTox::Compound.new(:smiles => smiles)
-  		if c.inchi != ""
-  			duplicates[c.inchi] = [] unless duplicates[c.inchi]
-  			duplicates[c.inchi] << "Line #{line_nr}: " + line.chomp
-  			compound_uri = c.uri
-  			dataset.compounds << compound_uri
-  			dataset.data[compound_uri] = [] unless dataset.data[compound_uri]
-  			case items[1].to_s
-  			when '1'
-  				dataset.data[compound_uri] << {feature_uri => true }
-  				nr_compounds += 1
-  			when '0'
-  				dataset.data[compound_uri] << {feature_uri => false }
-  				nr_compounds += 1
-  			else	
-				# AM: handle quantitative values
-				dataset.data[compound_uri] << {feature_uri => items[1].to_f}
-  				nr_compounds += 1
-  			end
-  		else
-  			smiles_errors << "Line #{line_nr}: " + line.chomp
-  		end
-  		line_nr += 1
-  	end	
-  when ".xls", ".xlsx"
-		begin
-			excel = 'tmp/' + params[:file][:filename]
-			name = params[:file][:filename]
-			File.mv(params[:file][:tempfile].path,excel)
-			if File.extname(params[:file][:filename]) == ".xlsx"    
-				book = Excelx.new(excel)
-			else
-				book = Excel.new(excel)
-			end
-			book.default_sheet = 0
-			1.upto(book.last_row) do |row|
-				smiles = book.cell(row,1)
-				c = OpenTox::Compound.new(:smiles => smiles)
-				if c.inchi != ""
-				duplicates[c.inchi] = [] unless duplicates[c.inchi]
-				duplicates[c.inchi] << "Line #{line_nr}: " + smiles if smiles
-				compound_uri = c.uri
-						dataset.compounds << compound_uri
-						dataset.data[compound_uri] = [] unless dataset.data[compound_uri]
-						case book.cell(row,2)
-						when 1, 1.0, "1" 
-							dataset.data[compound_uri] << {feature_uri => true }
-							nr_compounds += 1
-						when 0, 0.0, "0"
-							dataset.data[compound_uri] << {feature_uri => false }
-							nr_compounds += 1
-						else
-							activity_errors << "Line #{line_nr}: " + smiles if smiles
-						end
-					else
-						smiles_errors << "Line #{line_nr}: " + smiles if smiles
-					end
-					line_nr += 1
-			end
-			File.safe_unlink(excel)
-		rescue
-			flash[:notice] = "Please upload a Excel file created according to these #{link_to "instructions", "/excel_format"}."
-			redirect url_for('/create')
-		end
-  else
-    LOGGER.error "File upload error: " +  params[:file].inspect 
-		flash[:notice] = File.extname(params[:file][:filename]) + "is not a valid file extension. Please create an input file according to the instructions for #{link_to "Excel", "/excel_format"} or #{link_to "CSV", "/csv_format"}."
-		redirect url_for('/create')
-  end	
+	unless parser.format_errors.empty?
+		flash[:notice] = "Incorrect file format. Please follow the instructions for #{link_to "Excel", "/excel_format"} or #{link_to "CSV", "/csv_format"} formats."
+	end
 
-	if nr_compounds < 10
-		flash[:notice] = "Too few compounds to create a prediction model. Did you provide compounds in SMILES format and classification activities as described in the #{link_to "instructions", "/excel_format"}? As a rule of thumb you will need at least 100 training compounds for nongeneric datasets. A lower number could be sufficient for congeneric datasets."
+	if parser.dataset.compounds.empty?
+		flash[:notice] = "Dataset #{params[:file][:filename]} is empty."
 		redirect url_for('/create')
 	end
 
-	dataset_uri = dataset.save 
-	begin
-		task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => dataset_uri, :prediction_feature => feature_uri)
-	rescue
-		flash[:notice] = "Model creation failed. Please check if the input file is in a valid #{link_to "Excel", "/excel_format"} or #{link_to "CSV", "/csv_format"} format."
-		redirect url_for('/create')
-	end
-	@model.task_uri = task_uri
+	#begin
+		@model.task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => parser.dataset_uri, :prediction_feature => feature_uri)
+	#rescue
+	#	flash[:notice] = "Model creation failed. Please check if the input file is in a valid #{link_to "Excel", "/excel_format"} or #{link_to "CSV", "/csv_format"} format."
+	#	redirect url_for('/create')
+	#end
 
+=begin
 	unless @@config[:services]["opentox-model"].match(/localhost/)
 		validation_task_uri = OpenTox::Validation.crossvalidation(
 			:algorithm_uri => OpenTox::Algorithm::Lazar.uri,
-			:dataset_uri => dataset_uri,
+			:dataset_uri => parser.dataset_uri,
 			:prediction_feature => feature_uri,
 			:algorithm_params => "feature_generation_uri=#{OpenTox::Algorithm::Fminer.uri}"
 		).uri
-		#LOGGER.debug "Validation task: " + validation_task_uri
+		LOGGER.debug "Validation task: " + validation_task_uri
 		@model.validation_task_uri = validation_task_uri
 	end
+=end
 
-	@model.nr_compounds = nr_compounds
+=begin
+	if parser.nr_compounds < 10
+		flash[:notice] = "Too few compounds to create a prediction model. Did you provide compounds in SMILES format and classification activities as described in the #{link_to "instructions", "/excel_format"}? As a rule of thumb you will need at least 100 training compounds for nongeneric datasets. A lower number could be sufficient for congeneric datasets."
+		redirect url_for('/create')
+	end
+=end
+
+	@model.nr_compounds = parser.nr_compounds
 	@model.warnings = ''
 
-	if smiles_errors.size > 0
-		@model.warnings += "<p>Incorrect Smiles structures (ignored):</p>"
-		@model.warnings += smiles_errors.join("<br/>")
-	end
-	if activity_errors.size > 0
-		@model.warnings += "<p>Irregular activities (ignored - please use 1 for active and 0 for inactive compounds):</p>"
-		@model.warnings += activity_errors.join("<br/>")
-	end
+	@model.warnings += "<p>Incorrect Smiles structures (ignored):</p>" + parser.smiles_errors.join("<br/>") unless parser.smiles_errors.empty?
+	@model.warnings += "<p>Irregular activities (ignored):</p>" + parser.activity_errors.join("<br/>") unless parser.activity_errors.empty?
 	duplicate_warnings = ''
-	duplicates.each {|inchi,lines| duplicate_warnings += "<p>#{lines.join('<br/>')}</p>" if lines.size > 1 }
-	unless duplicate_warnings == ''
-		@model.warnings += "<p>Duplicated structures (all structures/activities used for model building, please  make sure, that the results were obtained from <em>independent</em> experiments):</p>" 
-		@model.warnings +=  duplicate_warnings
-	end
+	parser.duplicates.each {|inchi,lines| duplicate_warnings += "<p>#{lines.join('<br/>')}</p>" if lines.size > 1 }
+	@model.warnings += "<p>Duplicated structures (all structures/activities used for model building, please  make sure, that the results were obtained from <em>independent</em> experiments):</p>" + duplicate_warnings unless duplicate_warnings.empty?
 	@model.save
+
 	flash[:notice] = "Model creation started. Please be patient - model building may take up to several hours depending on the number and size of the input molecules."
 	redirect url_for('/models')
 
+	# TODO: check for empty model
 end
 
 post '/predict/?' do # post chemical name to model
@@ -405,13 +182,17 @@ post '/predict/?' do # post chemical name to model
 		confidence = nil
 		title = nil
 		db_activities = []
-		LOGGER.debug model.inspect
+		LOGGER.debug "curl -X POST -d 'compound_uri=#{@compound.uri}' -H 'Accept:application/x-yaml' #{model.uri}"
 		prediction = YAML.load(`curl -X POST -d 'compound_uri=#{@compound.uri}' -H 'Accept:application/x-yaml' #{model.uri}`)
 		source = prediction.creator
 		if prediction.data[@compound.uri]
 			if source.to_s.match(/model/)
 				prediction = prediction.data[@compound.uri].first.values.first
-				@predictions << {:title => model.name, :prediction => prediction[:classification], :confidence => prediction[:confidence]}
+				if prediction[File.join(@@config[:services]["opentox-model"],"lazar#classification")]
+					@predictions << {:title => model.name, :prediction => prediction[File.join(@@config[:services]["opentox-model"],"lazar#classification")], :confidence => prediction[File.join(@@config[:services]["opentox-model"],"lazar#confidence")]}
+				elsif prediction[File.join(@@config[:services]["opentox-model"],"lazar#regression")]
+					@predictions << {:title => model.name, :prediction => prediction[File.join(@@config[:services]["opentox-model"],"lazar#regression")], :confidence => prediction[File.join(@@config[:services]["opentox-model"],"lazar#confidence")]}
+				end
 			else
 				prediction = prediction.data[@compound.uri].first.values
 				@predictions << {:title => model.name, :measured_activities => prediction}
@@ -430,12 +211,9 @@ delete '/?' do
 	"All Models deleted."
 end
 
-#get '/error' do
-#	fail "testing mail delivery"
-#end
-
 # SASS stylesheet
 get '/stylesheets/style.css' do
   headers 'Content-Type' => 'text/css; charset=utf-8'
   sass :style
 end
+
