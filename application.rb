@@ -130,21 +130,21 @@ helpers do
 			model.uri = RestClient.get(File.join(model.task_uri, 'resultURI')).body
 			model.save
 		end
-		unless @@config[:services]["opentox-model"].match(/localhost/)
-			if !model.validation_uri and model.validation_status == "Completed"
-				begin
-					model.validation_uri = RestClient.get(File.join(model.validation_task_uri, 'resultURI')).body
-					LOGGER.debug "Validation URI: #{model.validation_uri}"
-					model.validation_report_task_uri = RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => model.validation_uri).body
-					LOGGER.debug "Validation Report Task URI: #{model.validation_report_task_uri}"
-					model.save
-				rescue
-				end
-			end
-			if model.validation_report_task_uri and !model.validation_report_uri and model.validation_report_status == 'Completed'
-				model.validation_report_uri = RestClient.get(File.join(model.validation_report_task_uri, 'resultURI')).body
+		#unless @@config[:services]["opentox-model"].match(/localhost/)
+		if !model.validation_uri and model.validation_status == "Completed"
+			begin
+				model.validation_uri = RestClient.get(File.join(model.validation_task_uri, 'resultURI')).body
+				LOGGER.debug "Validation URI: #{model.validation_uri}"
+				model.validation_report_task_uri = RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => model.validation_uri).body
+				LOGGER.debug "Validation Report Task URI: #{model.validation_report_task_uri}"
+				model.save
+			rescue
 			end
 		end
+		if model.validation_report_task_uri and !model.validation_report_uri and model.validation_report_status == 'Completed'
+			model.validation_report_uri = RestClient.get(File.join(model.validation_report_task_uri, 'resultURI')).body
+		end
+		#end
   end
 end
 
@@ -350,16 +350,16 @@ post '/upload' do # create a new model
 	end
 	@model.task_uri = task_uri
 
-	unless @@config[:services]["opentox-model"].match(/localhost/)
-		validation_task_uri = OpenTox::Validation.crossvalidation(
-			:algorithm_uri => OpenTox::Algorithm::Lazar.uri,
-			:dataset_uri => dataset_uri,
-			:prediction_feature => feature_uri,
-			:algorithm_params => "feature_generation_uri=#{OpenTox::Algorithm::Fminer.uri}"
-		).uri
-		#LOGGER.debug "Validation task: " + validation_task_uri
-		@model.validation_task_uri = validation_task_uri
-	end
+	#unless @@config[:services]["opentox-model"].match(/localhost/)
+	validation_task_uri = OpenTox::Validation.crossvalidation(
+		:algorithm_uri => OpenTox::Algorithm::Lazar.uri,
+		:dataset_uri => dataset_uri,
+		:prediction_feature => feature_uri,
+		:algorithm_params => "feature_generation_uri=#{OpenTox::Algorithm::Fminer.uri}"
+	).uri
+	#LOGGER.debug "Validation task: " + validation_task_uri
+	@model.validation_task_uri = validation_task_uri
+	#end
 
 	@model.nr_compounds = nr_compounds
 	@model.warnings = ''
