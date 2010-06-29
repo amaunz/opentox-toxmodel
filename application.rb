@@ -127,18 +127,14 @@ post '/upload' do # create a new model
 	#	redirect url_for('/create')
 	#end
 
-=begin
-	unless @@config[:services]["opentox-model"].match(/localhost/)
-		validation_task_uri = OpenTox::Validation.crossvalidation(
-			:algorithm_uri => OpenTox::Algorithm::Lazar.uri,
-			:dataset_uri => parser.dataset_uri,
-			:prediction_feature => feature_uri,
-			:algorithm_params => "feature_generation_uri=#{OpenTox::Algorithm::Fminer.uri}"
-		).uri
-		LOGGER.debug "Validation task: " + validation_task_uri
-		@model.validation_task_uri = validation_task_uri
-	end
-=end
+	validation_task_uri = OpenTox::Validation.crossvalidation(
+		:algorithm_uri => OpenTox::Algorithm::Lazar.uri,
+		:dataset_uri => parser.dataset_uri,
+		:prediction_feature => feature_uri,
+		:algorithm_params => "feature_generation_uri=#{OpenTox::Algorithm::Fminer.uri}"
+	).uri
+	LOGGER.debug "Validation task: " + validation_task_uri
+	@model.validation_task_uri = validation_task_uri
 
 =begin
 	if parser.nr_compounds < 10
