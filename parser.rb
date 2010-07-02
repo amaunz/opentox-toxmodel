@@ -37,14 +37,18 @@ class Parser
         @dataset.data[items[0]] = [] unless @dataset.data[items[0]]
 				case @type
 				when "classification"
-					case items[1].to_i.to_s
-					when '1'
+					case items[1].to_s
+					when TRUE_REGEXP
 						@dataset.data[items[0]] << {@feature_uri => true }
-					when '0'
+					when FALSE_REGEXP
 						@dataset.data[items[0]] << {@feature_uri => false }
 					end
 				when "regression"
-					@dataset.data[items[0]] << {@feature_uri => items[1]}
+					if items[1].to_f == 0
+						@activity_errors << "Row #{items[2]}: Zero values not allowed for regression datasets - entry ignored."
+					else
+						@dataset.data[items[0]] << {@feature_uri => items[1].to_f}
+					end
 				end
 		end
 		@dataset_uri = @dataset.save
@@ -78,7 +82,7 @@ class Parser
 			book.default_sheet = 0
 			1.upto(book.last_row) do |row|
 				input = validate( book.cell(row,1), book.cell(row,2), row ) # smiles, activity
-				@data << input
+				@data << input if input
 			end
 			File.safe_unlink(@file[:tempfile])
 		rescue
@@ -93,18 +97,23 @@ class Parser
 			@smiles_errors << "Row #{row}: " + [smiles,act].join(", ") 
 			return false
 		end
-		if !numeric?(act)
+		unless numeric?(act) or classification?(act)
 			@activity_errors << "Row #{row}: " + [smiles,act].join(", ")
 			return false
 		end
 		@duplicates[compound.inchi] = [] unless @duplicates[compound.inchi]
 		@duplicates[compound.inchi] << "Row #{row}: " + [smiles, act].join(", ")
-		@type = "regression" unless act.to_f == 0.0 or act.to_f == 1.0
+		@type = "regression" unless classification?(act)
 		@nr_compounds += 1
-		[ compound.uri, act.to_f ]
+		[ compound.uri, act , row ]
 	end
 
 	def numeric?(object)
-		  true if Float(object) rescue false
+		true if Float(object) rescue false
 	end
+
+	def classification?(object)
+		!object.to_s.strip.match(TRUE_REGEXP).nil? or !object.to_s.strip.match(FALSE_REGEXP).nil?
+	end
+
 end

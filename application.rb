@@ -21,9 +21,7 @@ end
 
 get '/models/?' do
 	@models = ToxCreateModel.all(:order => [ :created_at.desc ])
-	@models.each do |model|
-		process_model(model)
-	end
+	@models.each { |model| model.process }
 	haml :models
 end
 
@@ -53,7 +51,7 @@ end
 get '/model/:id/:view/?' do
   response['Content-Type'] = 'text/plain'
 	model = ToxCreateModel.get(params[:id])
-  process_model(model)
+  model.process
 
   begin
     case params[:view]
@@ -79,16 +77,8 @@ get '/create' do
 	haml :create
 end
 
-get '/about' do
-	haml :about
-end
-
-get '/csv_format' do
-	haml :csv_format
-end
-
-get '/excel_format' do
-	haml :excel_format
+get '/help' do
+	haml :help
 end
 
 get "/confidence" do
@@ -120,12 +110,12 @@ post '/upload' do # create a new model
 		redirect url_for('/create')
 	end
 
-	#begin
+	begin
 		@model.task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => parser.dataset_uri, :prediction_feature => feature_uri)
-	#rescue
-	#	flash[:notice] = "Model creation failed. Please check if the input file is in a valid #{link_to "Excel", "/excel_format"} or #{link_to "CSV", "/csv_format"} format."
-	#	redirect url_for('/create')
-	#end
+	rescue
+		flash[:notice] = "Model creation failed. Please check if the input file is in a valid #{link_to "Excel", "/excel_format"} or #{link_to "CSV", "/csv_format"} format."
+		redirect url_for('/create')
+	end
 
 	validation_task_uri = OpenTox::Validation.crossvalidation(
 		:algorithm_uri => OpenTox::Algorithm::Lazar.uri,
@@ -180,16 +170,19 @@ post '/predict/?' do # post chemical name to model
 		db_activities = []
 		LOGGER.debug "curl -X POST -d 'compound_uri=#{@compound.uri}' -H 'Accept:application/x-yaml' #{model.uri}"
 		prediction = YAML.load(`curl -X POST -d 'compound_uri=#{@compound.uri}' -H 'Accept:application/x-yaml' #{model.uri}`)
+		# TODO check if prediction failed - returns string
 		source = prediction.creator
 		if prediction.data[@compound.uri]
-			if source.to_s.match(/model/)
+			if source.to_s.match(/model/) # real prediction
 				prediction = prediction.data[@compound.uri].first.values.first
-				if prediction[File.join(@@config[:services]["opentox-model"],"lazar#classification")]
+				LOGGER.debug prediction[File.join(@@config[:services]["opentox-model"],"lazar#classification")]
+				LOGGER.debug prediction[File.join(@@config[:services]["opentox-model"],"lazar#confidence")]
+				if !prediction[File.join(@@config[:services]["opentox-model"],"lazar#classification")].nil?
 					@predictions << {:title => model.name, :prediction => prediction[File.join(@@config[:services]["opentox-model"],"lazar#classification")], :confidence => prediction[File.join(@@config[:services]["opentox-model"],"lazar#confidence")]}
-				elsif prediction[File.join(@@config[:services]["opentox-model"],"lazar#regression")]
+				elsif !prediction[File.join(@@config[:services]["opentox-model"],"lazar#regression")].nil?
 					@predictions << {:title => model.name, :prediction => prediction[File.join(@@config[:services]["opentox-model"],"lazar#regression")], :confidence => prediction[File.join(@@config[:services]["opentox-model"],"lazar#confidence")]}
 				end
-			else
+			else # database value
 				prediction = prediction.data[@compound.uri].first.values
 				@predictions << {:title => model.name, :measured_activities => prediction}
 			end
@@ -197,6 +190,7 @@ post '/predict/?' do # post chemical name to model
 			@predictions << {:title => model.name, :prediction => "not available (no similar compounds in the training dataset)"}
 		end
 	end
+	LOGGER.debug @predictions.inspect
 
 	haml :prediction
 end

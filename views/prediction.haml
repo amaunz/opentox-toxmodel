@@ -41,12 +41,12 @@
                 = activity(p[:prediction])
             - else
               %br
-                %em= p[:prediction]
+                %em= sprintf('%.03g', p[:prediction])
             - if p[:confidence]
               %br
                 (
                 %a{:href => "#", :id => "linkConfidence#{p.object_id}"} Confidence
-                = ": #{sprintf('%.03f', p[:confidence].to_f.abs)}"
+                = ": #{sprintf('%.03g', p[:confidence].to_f.abs)}"
                 :javascript
                   $("a#linkConfidence#{p.object_id}").click(function () {
                     $("dl#confidence").toggle();  

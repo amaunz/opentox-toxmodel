@@ -23,11 +23,10 @@
           = link_to "Inspect", "/models"
         %li{:class => ("selected" if /predict/ =~ request.path )}
           = link_to "Predict", "/predict"
-        %li{:class => ("selected" if /about/ =~ request.path )}
-          = link_to "About", "/about"
+        %li{:class => ("selected" if /help/ =~ request.path )}
+          = link_to "Help", "/help"
 
     .content
-
       - if `hostname`.match(/ot-test|ot-dev/)
         .notice 
           This service is for testing purposes only - once a week all models will be deleted. Please send bug reports and feature requests to our 

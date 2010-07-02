@@ -1,4 +1,5 @@
 class ToxCreateModel
+
 	include DataMapper::Resource
 	property :id, Serial
 	property :name, String, :length => 255
@@ -56,6 +57,21 @@ class ToxCreateModel
 		end
 	end
 
+	def type
+		lazar = RestClient.get(@uri, :accept => "application/x-yaml").body
+		#LOGGER.debug lazar
+		lazar = YAML.load(lazar)
+		#LOGGER.debug lazar.inspect
+		case lazar.dependentVariables
+		when /classification/
+			return "classification"
+		when /regression/
+			return "regression"
+		else
+			return "unknown"
+		end
+	end
+
 	def validation
 		begin
 			uri = File.join(@validation_uri, 'statistics')
@@ -93,8 +109,26 @@ class ToxCreateModel
 		end
 	end
 
+  def process
+    if !@uri and status == "Completed"
+			@uri = RestClient.get(File.join(@task_uri, 'resultURI')).body
+			save
+		end
+		if !@validation_uri and validation_status == "Completed"
+			begin
+				@validation_uri = RestClient.get(File.join(@validation_task_uri, 'resultURI')).body
+				LOGGER.debug "Validation URI: #{@validation_uri}"
+				@validation_report_task_uri = RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => @validation_uri).body
+				LOGGER.debug "Validation Report Task URI: #{@validation_report_task_uri}"
+				save
+			rescue
+			end
+		end
+		if @validation_report_task_uri and !@validation_report_uri and validation_report_status == 'Completed'
+			@validation_report_uri = RestClient.get(File.join(@validation_report_task_uri, 'resultURI')).body
+		end
+  end
+
 end
 
 DataMapper.auto_upgrade!
-
-
