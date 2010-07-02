@@ -39,9 +39,12 @@
             - elsif activity(p[:prediction]) == 'inactive'
               .inactive
                 = activity(p[:prediction])
+            - elsif p[:prediction].is_a?(Float)
+              .other
+                = sprintf('%.03g', p[:prediction])
             - else
-              %br
-                %em= sprintf('%.03g', p[:prediction])
+              .other
+                %em= p[:prediction].to_s
             - if p[:confidence]
               %br
                 (

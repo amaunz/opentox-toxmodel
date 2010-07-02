@@ -166,13 +166,14 @@ post '/predict/?' do # post chemical name to model
 	@predictions = []
 	params[:selection].keys.each do |id|
 		model = ToxCreateModel.get(id.to_i)
+		model.process unless model.uri
+		LOGGER.debug model.to_yaml
 		prediction = nil
 		confidence = nil
 		title = nil
 		db_activities = []
 		LOGGER.debug "curl -X POST -d 'compound_uri=#{@compound.uri}' -H 'Accept:application/x-yaml' #{model.uri}"
 		prediction = YAML.load(`curl -X POST -d 'compound_uri=#{@compound.uri}' -H 'Accept:application/x-yaml' #{model.uri}`)
-		# TODO check if prediction failed - returns string
 		source = prediction.creator
 		if prediction.data[@compound.uri]
 			if source.to_s.match(/model/) # real prediction
