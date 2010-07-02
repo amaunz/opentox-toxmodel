@@ -11,6 +11,7 @@ class ToxCreateModel
 	property :validation_report_uri, String, :length => 255
 	property :warnings, Text, :length => 2**32-1 
 	property :nr_compounds, Integer
+	property :type, String
 	property :created_at, DateTime
 
 	def status
@@ -57,22 +58,7 @@ class ToxCreateModel
 		end
 	end
 
-	def type
-		lazar = RestClient.get(@uri, :accept => "application/x-yaml").body
-		#LOGGER.debug lazar
-		lazar = YAML.load(lazar)
-		#LOGGER.debug lazar.inspect
-		case lazar.dependentVariables
-		when /classification/
-			return "classification"
-		when /regression/
-			return "regression"
-		else
-			return "unknown"
-		end
-	end
-
-	def validation
+	def classification_validation
 		begin
 			uri = File.join(@validation_uri, 'statistics')
 			yaml = RestClient.get(uri).body
@@ -109,11 +95,32 @@ class ToxCreateModel
 		end
 	end
 
+	def regression_validation
+		begin
+			uri = File.join(@validation_uri, 'statistics')
+			yaml = RestClient.get(uri).body
+			v = YAML.load(yaml)
+		rescue
+			"Service offline"
+		end
+	end
+
   def process
+
     if !@uri and status == "Completed"
 			@uri = RestClient.get(File.join(@task_uri, 'resultURI')).body
+			lazar = YAML.load(RestClient.get(@uri, :accept => "application/x-yaml").body)
+			case lazar.dependentVariables
+			when /classification/
+				@type = "classification"
+			when /regression/
+				@type = "regression"
+			else
+				@type = "unknown"
+			end
 			save
 		end
+
 		if !@validation_uri and validation_status == "Completed"
 			begin
 				@validation_uri = RestClient.get(File.join(@validation_task_uri, 'resultURI')).body

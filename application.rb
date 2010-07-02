@@ -53,18 +53,20 @@ get '/model/:id/:view/?' do
 	model = ToxCreateModel.get(params[:id])
   model.process
 
-  begin
+  #begin
     case params[:view]
       when "model"
 		    haml :model, :locals=>{:model=>model}, :layout => false
-		  when "validation"
-		    haml :model_validation, :locals=>{:model=>model}, :layout => false
+		  when "classification_validation"
+		    haml :classification_validation, :locals=>{:model=>model}, :layout => false
+		  when "regression_validation"
+		    haml :regression_validation, :locals=>{:model=>model}, :layout => false
 		  else
 		    return "render error"
 		end
-	rescue
-    return "unable to render model"
-	end
+	#rescue
+  #  return "unable to render model"
+	#end
 end
 
 get '/predict/?' do 

@@ -32,7 +32,6 @@
         %dt Algorithm:
         %dd
           %a{:href => "http://www.in-silico.de/articles/modi020905.pdf"} #{File.basename model.algorithm}
-          -# %a{:href => model.algorithm} RDF/XML
         %dt Type:
         %dd= model.type
         %dt Descriptors:
@@ -58,5 +57,9 @@
           ,
           %a{:href => "#{model.uri}.yaml"} YAML
           %em  (experts, models cannot be exported in Excel)
-        = haml :model_validation, :locals=>{:model=>model}, :layout => false     
+        - case model.type
+        - when "classification"
+          = haml :classification_validation, :locals=>{:model=>model}, :layout => false     
+        -when "regression"
+          = haml :regression_validation, :locals=>{:model=>model}, :layout => false     
           
