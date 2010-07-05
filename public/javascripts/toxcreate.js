@@ -68,7 +68,7 @@ $(function() {
       },
       success: function(data) {
         if (view == "model") $("div#model_" + id).html(data);
-        if (view ~= /validation/) $("dl#model_validation_" + id).html(data);
+        if (view.match(/validation/)) $("dl#model_validation_" + id).html(data);
       },
       error: function(data) {
         //alert("loadModel error");

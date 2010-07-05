@@ -51,9 +51,9 @@ end
 get '/model/:id/:view/?' do
   response['Content-Type'] = 'text/plain'
 	model = ToxCreateModel.get(params[:id])
-  model.process
+  model = model.process
 
-  #begin
+  begin
     case params[:view]
       when "model"
 		    haml :model, :locals=>{:model=>model}, :layout => false
@@ -64,9 +64,9 @@ get '/model/:id/:view/?' do
 		  else
 		    return "render error"
 		end
-	#rescue
-  #  return "unable to render model"
-	#end
+	rescue
+    return "unable to render model"
+	end
 end
 
 get '/predict/?' do 

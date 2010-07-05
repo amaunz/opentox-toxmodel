@@ -136,6 +136,8 @@ class ToxCreateModel
 		end
   end
 
+	self
+
 end
 
 DataMapper.auto_upgrade!
