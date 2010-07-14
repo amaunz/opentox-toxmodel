@@ -15,7 +15,11 @@ class ToxCreateModel
 	property :created_at, DateTime
 
 	def status
-		RestClient.get(File.join(@task_uri, 'hasStatus')).body
+		#begin
+			RestClient.get(File.join(@task_uri, 'hasStatus')).body
+		#rescue
+		#	"Service offline"
+		#end
 	end
 
 	def validation_status
@@ -107,36 +111,47 @@ class ToxCreateModel
 
   def process
 
-    if !@uri and status == "Completed"
-			@uri = RestClient.get(File.join(@task_uri, 'resultURI')).body
+    if @uri.nil? and status == "Completed"
+			update :uri => RestClient.get(File.join(@task_uri, 'resultURI')).body
 			lazar = YAML.load(RestClient.get(@uri, :accept => "application/x-yaml").body)
 			case lazar.dependentVariables
 			when /classification/
-				@type = "classification"
+				update :type => "classification"
 			when /regression/
-				@type = "regression"
+				update :type => "regression"
 			else
-				@type = "unknown"
+				update :type => "unknown"
 			end
-			save
-		end
 
-		if !@validation_uri and validation_status == "Completed"
+		elsif @validation_uri.nil? and validation_status == "Completed"
 			begin
-				@validation_uri = RestClient.get(File.join(@validation_task_uri, 'resultURI')).body
+				update :validation_uri => RestClient.get(File.join(@validation_task_uri, 'resultURI')).body
 				LOGGER.debug "Validation URI: #{@validation_uri}"
-				@validation_report_task_uri = RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => @validation_uri).body
+				update :validation_report_task_uri => RestClient.post(File.join(@@config[:services]["opentox-validation"],"/report/crossvalidation"), :validation_uris => @validation_uri).body
 				LOGGER.debug "Validation Report Task URI: #{@validation_report_task_uri}"
-				save
 			rescue
+				LOGGER.warn "Cannot create Validation Report Task #{@validation_report_task_uri} for  Validation URI #{@validation_uri} from Task #{@validation_task_uri}"
+			end
+
+		elsif @validation_report_uri.nil? and validation_report_status == "Completed"
+			begin
+				LOGGER.debug File.join(@validation_report_task_uri, 'resultURI')
+				LOGGER.debug "Report URI: "+RestClient.get(File.join(@validation_report_task_uri, 'resultURI')).body
+				update :validation_report_uri => RestClient.get(File.join(@validation_report_task_uri, 'resultURI')).body
+			rescue
+				LOGGER.warn "Cannot create Validation Report for  Task URI #{@validation_report_task_uri} "
 			end
 		end
-		if @validation_report_task_uri and !@validation_report_uri and validation_report_status == 'Completed'
-			@validation_report_uri = RestClient.get(File.join(@validation_report_task_uri, 'resultURI')).body
-		end
-  end
 
-	self
+		#LOGGER.debug self.to_yaml
+		#LOGGER.debug @uri
+		#LOGGER.debug @validation_uri
+		#LOGGER.debug @validation_uri.nil?
+		#LOGGER.debug validation_status
+		#LOGGER.debug self.validation_report_task_uri
+		#LOGGER.debug self.validation_report_uri
+		#self.save
+  end
 
 end
 

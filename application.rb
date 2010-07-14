@@ -51,21 +51,27 @@ end
 get '/model/:id/:view/?' do
   response['Content-Type'] = 'text/plain'
 	model = ToxCreateModel.get(params[:id])
-  model = model.process
+  model.process
+	model.save
 
   begin
     case params[:view]
       when "model"
 		    haml :model, :locals=>{:model=>model}, :layout => false
-		  when "classification_validation"
-		    haml :classification_validation, :locals=>{:model=>model}, :layout => false
-		  when "regression_validation"
-		    haml :regression_validation, :locals=>{:model=>model}, :layout => false
+		  when /validation/
+				if model.type == "classification"
+					haml :classification_validation, :locals=>{:model=>model}, :layout => false
+				elsif model.type == "regression"
+					haml :regression_validation, :locals=>{:model=>model}, :layout => false
+				else
+					return "Unknown model type '#{model.type}'"
+				end
 		  else
-		    return "render error"
+				return "unable to render model: id #{params[:id]}, view #{params[:view]}"
+		    #return "render error"
 		end
 	rescue
-    return "unable to render model"
+    return "unable to render model: id #{params[:id]}, view #{params[:view]}"
 	end
 end
 
@@ -145,7 +151,7 @@ post '/upload' do # create a new model
 	@model.warnings += "<p>Duplicated structures (all structures/activities used for model building, please  make sure, that the results were obtained from <em>independent</em> experiments):</p>" + duplicate_warnings unless duplicate_warnings.empty?
 	@model.save
 
-	flash[:notice] = "Model creation started. Please be patient - model building may take up to several hours depending on the number and size of the input molecules."
+	flash[:notice] = "Model creation and validation started - this may last up to several hours depending on the number and size of the training compounds."
 	redirect url_for('/models')
 
 	# TODO: check for empty model

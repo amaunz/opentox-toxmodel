@@ -11,9 +11,17 @@
         = v
       - else
         %dl
-          %dt Number of predictions:
-          %dd= v[:n]
-        %p= v.inspect
+          %dt Number of predictions
+          %dd= v[:num_instances] - v[:num_unpredicted]
+          %dt
+            %a{:href => "http://en.wikipedia.org/wiki/R-squared"} R-squared
+          %dd= sprintf '%.03g', v[:regression_statistics][:r_square]
+          %dt
+            %a{:href => "http://en.wikipedia.org/wiki/Root_mean_square_deviation"} Root Mean Square Error
+          %dd= sprintf '%.03g', v[:regression_statistics][:root_mean_squared_error]
+          %dt
+            %a{:href => "http://en.wikipedia.org/wiki/Mean_absolute_error"} Mean Absolute Error
+          %dd= sprintf '%.03g', v[:regression_statistics][:mean_absolute_error]
     - else
       = image_tag("/snake_transparent.gif") if model.validation_status == "Running"
       %a{:href => model.validation_task_uri} #{model.validation_status}
