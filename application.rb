@@ -34,7 +34,6 @@ class ToxCreateModel
 	property :nr_compounds, Integer
 	property :created_at, DateTime
 	
-
 	def status
 		RestClient.get(File.join(@task_uri, 'hasStatus')).body
 	end
