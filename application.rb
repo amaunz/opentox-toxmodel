@@ -13,6 +13,13 @@ LOGGER.progname = File.expand_path __FILE__
 use Rack::Flash
 set :sessions, true
 
+
+# SASS stylesheet
+get '/stylesheets/style.css' do
+  headers 'Content-Type' => 'text/css; charset=utf-8'
+  sass :style
+end
+
 class ToxCreateModel
 	include DataMapper::Resource
 	property :id, Serial
@@ -26,6 +33,7 @@ class ToxCreateModel
 	property :warnings, Text, :length => 2**32-1 
 	property :nr_compounds, Integer
 	property :created_at, DateTime
+	
 
 	def status
 		RestClient.get(File.join(@task_uri, 'hasStatus')).body
@@ -432,8 +440,4 @@ end
 #	fail "testing mail delivery"
 #end
 
-# SASS stylesheet
-get '/stylesheets/style.css' do
-  headers 'Content-Type' => 'text/css; charset=utf-8'
-  sass :style
-end
+
