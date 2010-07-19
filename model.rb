@@ -143,14 +143,6 @@ class ToxCreateModel
 			end
 		end
 
-		#LOGGER.debug self.to_yaml
-		#LOGGER.debug @uri
-		#LOGGER.debug @validation_uri
-		#LOGGER.debug @validation_uri.nil?
-		#LOGGER.debug validation_status
-		#LOGGER.debug self.validation_report_task_uri
-		#LOGGER.debug self.validation_report_uri
-		#self.save
   end
 
 end

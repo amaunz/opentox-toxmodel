@@ -79,9 +79,9 @@ $(function() {
 
   checkValidation = function() {
     var reload_id = "";
-    $("input.model_validation").each(function(){
+    $("input.model_validation_report").each(function(){
         if($(this).val() != "Completed") {
-          reload_id = this.id.replace("model_validation_","");
+          reload_id = this.id.replace("model_validation_report_","");
           if(/^\d+$/.test(reload_id)) loadModel(reload_id, 'validation');
         };
     });
