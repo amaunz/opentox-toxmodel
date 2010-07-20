@@ -15,12 +15,6 @@ LOGGER.progname = File.expand_path __FILE__
 use Rack::Flash
 set :sessions, true
 
-# SASS stylesheet
-get '/stylesheets/style.css' do
-  headers 'Content-Type' => 'text/css; charset=utf-8'
-  sass :style
-end
-
 get '/?' do
 	redirect url_for('/create')
 end
@@ -216,3 +210,8 @@ delete '/?' do
 	"All Models deleted."
 end
 
+# SASS stylesheet
+get '/stylesheets/style.css' do
+  headers 'Content-Type' => 'text/css; charset=utf-8'
+  sass :style
+end
