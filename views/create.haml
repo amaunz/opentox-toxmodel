@@ -2,28 +2,32 @@
 
   %p
     This service creates 
-    %a{:href => 'http://lazar.in-silico.de'} lazar
-    %em classification
-    models (i.e. models that discriminate between toxic/nontoxic compounds) from your uploaded datasets. Here are
-    = link_to "instructions", '/excel_format'
-    , for creating training datasets in Excel.
+    %ul
+      %li
+        %a{:href => 'http://lazar.in-silico.de'} lazar
+        %em classification
+        models (i.e. models that discriminate between toxic/nontoxic compounds) and
+      %li
+        %a{:href => 'http://lazar.in-silico.de'} lazar
+        %em regression
+        models (i.e. models that predict quantitative values, e.g. LC50's)
+    from your uploaded datasets. Further modelling algorithms will be added in future versions.
+ 
   %p
-    Facilities to create models for quantitative values (e.g. LC50s) and further modelling algorithms will be added in future versions.
+    Please read the 
+    = link_to "instructions for creating training datasets", '/help'
+    before submitting.
 
   %form{ :action => url_for('/upload'), :method => "post", :enctype => "multipart/form-data" }
     %fieldset
-      -#%legend
-        Upload training data and create a
-        %a{:href => 'http://lazar.in-silico.de'} lazar
-        model
-      %label{:for => 'endpoint'} 1. Enter a name for your endpoint:
+      %label{:for => 'endpoint'} 1. Enter endpoint name and unit (for regression):
       %input{:type => 'text', :name => 'endpoint', :id => 'endpoint', :size => '50'}
       %br
       %label{:for => 'file'}
         2. Upload training data in
-        = link_to "Excel", '/excel_format'
+        = link_to "Excel", '/help'
         or
-        = link_to "CSV", '/csv_format'
+        = link_to "CSV", '/help'
         format:
       %input{:type => 'file', :name => 'file', :id => 'file', :size => '41'}
     %input{ :type => "submit", :value => "Create model"}

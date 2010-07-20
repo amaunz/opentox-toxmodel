@@ -21,6 +21,8 @@
               - elsif activity(a) == 'inactive'
                 .inactive
                   = activity(a)
+              - else
+                = a
             %br
               (
               %a{:href => "#", :id => "linkTrainingData#{p.object_id}"} Training data
@@ -37,14 +39,17 @@
             - elsif activity(p[:prediction]) == 'inactive'
               .inactive
                 = activity(p[:prediction])
+            - elsif p[:prediction].is_a?(Float)
+              .other
+                = sprintf('%.03g', p[:prediction])
             - else
-              %br
-                %em= p[:prediction]
+              .other
+                %em= p[:prediction].to_s
             - if p[:confidence]
               %br
                 (
                 %a{:href => "#", :id => "linkConfidence#{p.object_id}"} Confidence
-                = ": #{sprintf('%.03f', p[:confidence].to_f.abs)}"
+                = ": #{sprintf('%.03g', p[:confidence].to_f.abs)}"
                 :javascript
                   $("a#linkConfidence#{p.object_id}").click(function () {
                     $("dl#confidence").toggle();  
