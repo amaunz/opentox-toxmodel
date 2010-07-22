@@ -10,8 +10,6 @@ require File.join(File.dirname(__FILE__),'model.rb')
 require File.join(File.dirname(__FILE__),'helper.rb')
 require File.join(File.dirname(__FILE__),'parser.rb')
 
-LOGGER.progname = File.expand_path __FILE__
-
 use Rack::Flash
 set :sessions, true
 
