@@ -66,7 +66,6 @@ get '/model/:id/:view/?' do
 				end
 		  else
 				return "unable to render model: id #{params[:id]}, view #{params[:view]}"
-		    #return "render error"
 		end
 	rescue
     return "unable to render model: id #{params[:id]}, view #{params[:view]}"
@@ -176,8 +175,9 @@ post '/predict/?' do # post chemical name to model
 		confidence = nil
 		title = nil
 		db_activities = []
-		LOGGER.debug "curl -X POST -d 'compound_uri=#{@compound.uri}' -H 'Accept:application/x-yaml' #{model.uri}"
+		#LOGGER.debug "curl -X POST -d 'compound_uri=#{@compound.uri}' -H 'Accept:application/x-yaml' #{model.uri}"
 		prediction = YAML.load(`curl -X POST -d 'compound_uri=#{@compound.uri}' -H 'Accept:application/x-yaml' #{model.uri}`)
+    #prediction = YAML.load(OpenTox::Model::Lazar.predict(params[:compound_uri],params[:model_uri]))
 		source = prediction.creator
 		if prediction.data[@compound.uri]
 			if source.to_s.match(/model/) # real prediction
@@ -185,9 +185,19 @@ post '/predict/?' do # post chemical name to model
 				LOGGER.debug prediction[File.join(@@config[:services]["opentox-model"],"lazar#classification")]
 				LOGGER.debug prediction[File.join(@@config[:services]["opentox-model"],"lazar#confidence")]
 				if !prediction[File.join(@@config[:services]["opentox-model"],"lazar#classification")].nil?
-					@predictions << {:title => model.name, :prediction => prediction[File.join(@@config[:services]["opentox-model"],"lazar#classification")], :confidence => prediction[File.join(@@config[:services]["opentox-model"],"lazar#confidence")]}
+					@predictions << {
+            :title => model.name,
+            :model_uri => model.uri,
+            :prediction => prediction[File.join(@@config[:services]["opentox-model"],"lazar#classification")],
+            :confidence => prediction[File.join(@@config[:services]["opentox-model"],"lazar#confidence")]
+            }
 				elsif !prediction[File.join(@@config[:services]["opentox-model"],"lazar#regression")].nil?
-					@predictions << {:title => model.name, :prediction => prediction[File.join(@@config[:services]["opentox-model"],"lazar#regression")], :confidence => prediction[File.join(@@config[:services]["opentox-model"],"lazar#confidence")]}
+					@predictions << {
+            :title => model.name,
+            :model_uri => model.uri,
+            :prediction => prediction[File.join(@@config[:services]["opentox-model"],"lazar#regression")],
+            :confidence => prediction[File.join(@@config[:services]["opentox-model"],"lazar#confidence")]
+            }
 				end
 			else # database value
 				prediction = prediction.data[@compound.uri].first.values
@@ -200,6 +210,36 @@ post '/predict/?' do # post chemical name to model
 	LOGGER.debug @predictions.inspect
 
 	haml :prediction
+end
+
+post "/lazar/?" do
+  @page = 0
+  @page = params[:page].to_i if params[:page]
+  @highlight = params[:highlight]
+  @model_uri = params[:model_uri]
+  @prediction = YAML.load(OpenTox::Model::Lazar.predict(params[:compound_uri],params[:model_uri]))
+  @compound = OpenTox::Compound.new(:uri => params[:compound_uri])
+  @title = @prediction.title
+  if @prediction.data[@compound.uri]
+    if @prediction.creator.to_s.match(/model/) # real prediction
+      p = @prediction.data[@compound.uri].first.values.first
+      if !p[File.join(@@config[:services]["opentox-model"],"lazar#classification")].nil?
+        feature = File.join(@@config[:services]["opentox-model"],"lazar#classification")
+      elsif !p[File.join(@@config[:services]["opentox-model"],"lazar#regression")].nil?
+        feature = File.join(@@config[:services]["opentox-model"],"lazar#regression")
+      end
+      @activity = p[feature]
+      @confidence = p[File.join(@@config[:services]["opentox-model"],"lazar#confidence")]
+      @neighbors = p[File.join(@@config[:services]["opentox-model"],"lazar#neighbors")]#.sort{|a,b| b.last[:similarity] <=> a.last[:similarity]}
+      #@training_activities = p[File.join(@@config[:services]["opentox-model"],"lazar#activities")]
+      @features = p[File.join(@@config[:services]["opentox-model"],"lazar#features")]
+    else # database value
+      @measured_activities = @prediction.data[@compound.uri].first.values
+    end
+  else
+    @activity = "not available (no similar compounds in the training dataset)"
+  end
+  haml :lazar
 end
 
 delete '/?' do

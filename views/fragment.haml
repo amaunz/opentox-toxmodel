@@ -1,0 +1,9 @@
+%form{:name => "form", :action => url_for('/lazar'), :method => "post", :enctype => "multipart/form-data" }
+  %input{:type => :hidden, :name => :compound_uri, :value => compound_uri}
+  %input{:type => :hidden, :name => :model_uri, :value => model_uri}
+  %input{:type => :hidden, :name => :highlight, :value => smarts}
+  - if smarts.nil?
+    %input{ :type => "submit", :value => "Reset"}
+  - else
+    %input{ :type => "submit", :value => smarts}
+

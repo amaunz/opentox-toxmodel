@@ -10,11 +10,7 @@
 
   %body
     .logo= image_tag "/ToxCreate_rgb_72.png", :alt => 'ToxCreate', :align => "right"
-    -#.headline
-      .logo
-        .span1="Tox" 
-        .span2="Create"
-         
+
     .index
       %ul
         %li{:class => ("selected" if /\/create/ =~ request.path )}
@@ -27,7 +23,7 @@
           = link_to "Help", "/help"
 
     .content
-      - if `hostname`.match(/ot-test|ot-dev/)
+      - if `hostname`.match(/ot-test/)
         .notice 
           This service is for testing purposes only - once a week all models will be deleted. Please send bug reports and feature requests to our 
           %a{:href => 'http://github.com/helma/opentox-toxmodel/issues'} issue tracker.

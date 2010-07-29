@@ -1,0 +1,7 @@
+- unless 5*page.to_i+5 >= size
+  %form{:name => "form", :action => url_for('/lazar'), :method => "post", :enctype => "multipart/form-data" }
+    %input{:type => :hidden, :name => :compound_uri, :value => compound_uri}
+    %input{:type => :hidden, :name => :model_uri, :value => model_uri}
+    %input{:type => :hidden, :name => :highlight, :value => smarts}
+    %input{:type => :hidden, :name => :page, :value => page.to_i+1}
+    %input{ :type => "submit", :value => "&gt;&gt;"}
