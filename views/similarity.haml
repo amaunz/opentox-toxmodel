@@ -1,0 +1,19 @@
+%dl#similarity{ :style => "display: none;" }
+  %dt
+    Similarity
+    (
+    = hide_link "#similarity"
+    )
+  %dd 
+    %code lazar
+    calculates 
+    %em activity specific
+    similarities based on the presence of statistically 
+    = toggle_link "#significant_fragments", "significant fragments"
+    This procedure will
+    %ul
+      %li consider only those parts of a chemical structure that are relevant for a particular endpoint
+      %li ignore inert parts of the structure
+      %li lead to different similarities, depending on the toxic endpoint
+    Similarities of 1 may be encountered even for structurally dissimilar compounds, because inert parts are ignored.
+    

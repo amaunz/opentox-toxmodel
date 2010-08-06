@@ -16,7 +16,7 @@
           = link_to "Create", "/create"
         %li{:class => ("selected" if /models/ =~ request.path )}
           = link_to "Inspect", "/models"
-        %li{:class => ("selected" if /predict/ =~ request.path )}
+        %li{:class => ("selected" if /predict|lazar/ =~ request.path )}
           = link_to "Predict", "/predict"
         %li{:class => ("selected" if /help/ =~ request.path )}
           = link_to "Help", "/help"

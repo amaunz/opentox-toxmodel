@@ -1,0 +1,44 @@
+%dl#lazar_algorithm
+  %dt
+    %code lazar
+    prediction
+    (
+    = hide_link "#lazar_algorithm"
+    )
+  %dd 
+    %p
+      %code lazar
+      searches the training dataset for  
+      = toggle_link "#similarity", "similar"
+      compounds 
+      %em (neighbors)
+      and calculates the prediction from their measured activities.
+      %code lazar
+      calculates predictions using
+      %ul
+        %li
+          a majority vote (weighted by compound similarity) for
+          %em classification
+        %li
+          a local QSAR model based on neighbors for
+          %em regression
+
+    %p
+      = toggle_link "#significant_fragments", "Significant fragments"
+      are highlighted in the structure display as follows:
+      %ul
+        %li
+          .active activating fragments
+        %li
+          .inactive deactivating fragments 
+        %li
+          .inconclusive regions, where activating and deactivating fragments overlap
+        %li
+          .other inert parts
+
+    %p
+      Please keep in mind that predictions are based on the measured activities of neighbors. 
+      = toggle_link "#significant_fragments", "Significant fragments"
+      are solely used to determine 
+      = toggle_link "#similarity", "activity specific similarities"
+      of neighbors.

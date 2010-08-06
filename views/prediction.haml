@@ -15,17 +15,10 @@
           - if p[:measured_activities]
             %br
             - p[:measured_activities].each do |a|
-              - if activity(a) == 'active'
-                .active
-                  = activity(a)
-              - elsif activity(a) == 'inactive'
-                .inactive
-                  = activity(a)
-              - else
-                = a
+              = activity_markup(a)
             %br
               (
-              %a{:href => "#", :id => "linkTrainingData#{p.object_id}"} Training data
+              %a{:href => "#", :id => "linkTrainingData#{p.object_id}"} Measured activity
               :javascript
                 $("a#linkTrainingData#{p.object_id}").click(function () {
                   $("dl#training_data").toggle();  
@@ -33,18 +26,7 @@
               )
 
           - else
-            - if activity(p[:prediction]) == 'active'
-              .active
-                = activity(p[:prediction])
-            - elsif activity(p[:prediction]) == 'inactive'
-              .inactive
-                = activity(p[:prediction])
-            - elsif p[:prediction].is_a?(Float)
-              .other
-                = sprintf('%.03g', p[:prediction])
-            - else
-              .other
-                %em= p[:prediction].to_s
+            = activity_markup(p[:prediction])
             - if p[:confidence]
               %br
                 (
@@ -61,13 +43,5 @@
                 %input{:type => :hidden, :name => :model_uri, :value => p[:model_uri]}
                 %input{ :type => "submit", :value => "Details"}
 
-%dl#confidence{ :style => "display: none;" }
-  %dt Confidence:
-  %dd Indicates the applicability domain of a model. Predictions with a high confidence can be expected to be more reliable than predictions with low confidence. Confidence values may take any value between 0 and 1. For most models confidence &gt; 0.025 is a sensible (hard) cutoff to distiguish between reliable and unreliable predictions.
-
-
-%dl#training_data{ :style => "display: none;" }
-  %dt Training data:
-  %dd Experimental result(s) from the training dataset are displayed here. 
-
-
+= haml :confidence, :layout => false
+= haml :training_data, :layout => false

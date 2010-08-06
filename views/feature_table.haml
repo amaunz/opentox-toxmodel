@@ -1,0 +1,28 @@
+%table
+  - unless features[:activating].empty?
+    %tr
+      %th
+        activating 
+        (
+        %a{:href => "http://www.daylight.com/dayhtml/doc/theory/theory.smarts.html"} SMARTS
+        )
+      %th p value
+    - if features[:activating]
+      - features[:activating].sort{|a,b| b[:p_value] <=> a[:p_value] }.each do |f|
+        %tr
+          %td= f[:smarts]
+          %td= f[:p_value]
+  - unless features[:deactivating].empty?
+    %tr
+      %th
+        deactivating
+        (
+        %a{:href => "http://www.daylight.com/dayhtml/doc/theory/theory.smarts.html"} SMARTS
+        )
+      %th p value
+    - if features[:deactivating]
+      - features[:deactivating].sort{|a,b| b[:p_value] <=> a[:p_value] }.each do |f|
+        %tr
+          %td= f[:smarts]
+          %td= f[:p_value]
+

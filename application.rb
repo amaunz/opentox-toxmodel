@@ -28,11 +28,11 @@ delete '/model/:id/?' do
 	begin
 		RestClient.delete model.uri if model.uri
 		RestClient.delete model.task_uri if model.task_uri
+    model.destroy!
+    flash[:notice] = "#{model.name} model deleted."
 	rescue
 	  flash[:notice] = "#{model.name} model delete error."
 	end
-	model.destroy!
-	flash[:notice] = "#{model.name} model deleted."
 	redirect url_for('/models')
 end
 
@@ -122,14 +122,20 @@ post '/upload' do # create a new model
 		redirect url_for('/create')
 	end
 
-	validation_task_uri = OpenTox::Validation.crossvalidation(
-		:algorithm_uri => OpenTox::Algorithm::Lazar.uri,
-		:dataset_uri => parser.dataset_uri,
-		:prediction_feature => feature_uri,
-		:algorithm_params => "feature_generation_uri=#{OpenTox::Algorithm::Fminer.uri}"
-	).uri
-	LOGGER.debug "Validation task: " + validation_task_uri
-	@model.validation_task_uri = validation_task_uri
+=begin
+  begin
+    validation_task_uri = OpenTox::Validation.crossvalidation(
+      :algorithm_uri => OpenTox::Algorithm::Lazar.uri,
+      :dataset_uri => parser.dataset_uri,
+      :prediction_feature => feature_uri,
+      :algorithm_params => "feature_generation_uri=#{OpenTox::Algorithm::Fminer.uri}"
+    ).uri
+    LOGGER.debug "Validation task: " + validation_task_uri
+    @model.validation_task_uri = validation_task_uri
+	rescue
+		flash[:notice] = "Model validation failed."
+  end
+=end
 
 =begin
 	if parser.nr_compounds < 10
@@ -170,7 +176,6 @@ post '/predict/?' do # post chemical name to model
 	params[:selection].keys.each do |id|
 		model = ToxCreateModel.get(id.to_i)
 		model.process unless model.uri
-		LOGGER.debug model.to_yaml
 		prediction = nil
 		confidence = nil
 		title = nil
@@ -178,12 +183,13 @@ post '/predict/?' do # post chemical name to model
 		#LOGGER.debug "curl -X POST -d 'compound_uri=#{@compound.uri}' -H 'Accept:application/x-yaml' #{model.uri}"
 		prediction = YAML.load(`curl -X POST -d 'compound_uri=#{@compound.uri}' -H 'Accept:application/x-yaml' #{model.uri}`)
     #prediction = YAML.load(OpenTox::Model::Lazar.predict(params[:compound_uri],params[:model_uri]))
+    LOGGER.debug prediction.to_yaml
 		source = prediction.creator
 		if prediction.data[@compound.uri]
 			if source.to_s.match(/model/) # real prediction
 				prediction = prediction.data[@compound.uri].first.values.first
-				LOGGER.debug prediction[File.join(@@config[:services]["opentox-model"],"lazar#classification")]
-				LOGGER.debug prediction[File.join(@@config[:services]["opentox-model"],"lazar#confidence")]
+				#LOGGER.debug prediction[File.join(@@config[:services]["opentox-model"],"lazar#classification")]
+				#LOGGER.debug prediction[File.join(@@config[:services]["opentox-model"],"lazar#confidence")]
 				if !prediction[File.join(@@config[:services]["opentox-model"],"lazar#classification")].nil?
 					@predictions << {
             :title => model.name,
@@ -215,7 +221,7 @@ end
 post "/lazar/?" do
   @page = 0
   @page = params[:page].to_i if params[:page]
-  @highlight = params[:highlight]
+  #@highlight = params[:highlight]
   @model_uri = params[:model_uri]
   @prediction = YAML.load(OpenTox::Model::Lazar.predict(params[:compound_uri],params[:model_uri]))
   @compound = OpenTox::Compound.new(:uri => params[:compound_uri])
@@ -230,8 +236,7 @@ post "/lazar/?" do
       end
       @activity = p[feature]
       @confidence = p[File.join(@@config[:services]["opentox-model"],"lazar#confidence")]
-      @neighbors = p[File.join(@@config[:services]["opentox-model"],"lazar#neighbors")]#.sort{|a,b| b.last[:similarity] <=> a.last[:similarity]}
-      #@training_activities = p[File.join(@@config[:services]["opentox-model"],"lazar#activities")]
+      @neighbors = p[File.join(@@config[:services]["opentox-model"],"lazar#neighbors")]
       @features = p[File.join(@@config[:services]["opentox-model"],"lazar#features")]
     else # database value
       @measured_activities = @prediction.data[@compound.uri].first.values
@@ -241,6 +246,22 @@ post "/lazar/?" do
   end
   haml :lazar
 end
+
+# proxy to get data from compound service
+# (jQuery load does not work with external URIs)
+get %r{/compound/(.*)} do |inchi|
+  OpenTox::Compound.new(:inchi => inchi).names.gsub(/\n/,', ')
+end
+
+=begin
+post "/neighbors" do
+  @neighbors = params[:neighbors]
+  @page = params[:page].to_i
+  LOGGER.debug @neighbors
+  LOGGER.debug @page
+  haml :neighbors
+end
+=end
 
 delete '/?' do
   ToxCreateModel.auto_migrate!

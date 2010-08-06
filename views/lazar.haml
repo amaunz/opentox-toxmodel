@@ -1,163 +1,55 @@
+%p= link_to "New prediction", "/predict"
 .lazar-predictions
+
+  -# explanations
+  = haml :lazar_algorithm, :layout => false
+  = haml :confidence, :layout => false
+  = haml :similarity, :layout => false
+  = haml :significant_fragments, :layout => false
+  = haml :training_data, :layout => false
+
+  %a{:name => "prediction"}
   %table
-    %tr
-      %th= @title.gsub(/_lazar_.*$/,' ').capitalize
-      %th Prediction
-      %th 
-        %a{:href => "#", :id => "linkConfidence#{p.object_id}"} Confidence
-        :javascript
-          $("a#linkConfidence#{p.object_id}").click(function () {
-            $("dl#confidence").toggle();  
-          });
-      -#%th
-        Significant fragments
-        = haml :fragment, :locals => {:compound_uri => @compound.uri, :model_uri => @model_uri, :smarts => nil}, :layout => false
-      -#%th Additional data
-
-    %tr
-      %td
-        %img{:src => @compound.display_smarts_uri(@features[:activating].keys,@features[:deactivating].keys, params[:highlight]), :alt => @compound.smiles}
-        %td
-          - if @measured_activities
-            %br
-            - @measured_activities.each do |a|
-              - if activity(a) == 'active'
-                .active
-                  = activity(a)
-              - elsif activity(a) == 'inactive'
-                .inactive
-                  = activity(a)
-              - else
-                = a
-            %br
-              (
-              %a{:href => "#", :id => "linkTrainingData#{p.object_id}"} Training data
-              :javascript
-                $("a#linkTrainingData#{p.object_id}").click(function () {
-                  $("dl#training_data").toggle();  
-                });
-              )
-
-          - else
-            - if activity(@activity) == 'active'
-              .active
-                = activity(@activity)
-            - elsif activity(@activity) == 'inactive'
-              .inactive
-                = activity(@activity)
-            - elsif @activity.is_a?(Float)
-              .other
-                = sprintf('%.03g', @activity)
-            - else
-              .other
-                %em= @activity.to_s
-        %td= sprintf('%.03g', @confidence.to_f.abs) if @confidence
-        -#%td
-          %table
-            - unless @features[:activating].empty?
-              %tr
-                %th activating
-                %th p value
-              - if @features[:activating]
-                - @features[:activating].sort{|a,b| b.last <=> a.last }.each do |f|
-                  %tr
-                  - if @highlight == f[0]
-                    %td.selected= haml :fragment, :locals => {:compound_uri => @compound.uri, :model_uri => @model_uri, :smarts => f[0]}, :layout => false
-                    %td.selected= f[1]
-                  - else
-                    %td= haml :fragment, :locals => {:compound_uri => @compound.uri, :model_uri => @model_uri, :smarts => f[0]}, :layout => false
-                    %td= f[1]
-            - unless @features[:deactivating].empty?
-              %tr
-                %th deactivating
-                %th p value
-              - if @features[:deactivating]
-                - @features[:deactivating].sort{|a,b| b.last <=> a.last }.each do |f|
-                  %tr
-                  - if @highlight == f[0]
-                    %td.selected= haml :fragment, :locals => {:compound_uri => @compound.uri, :model_uri => @model_uri, :smarts => f[0]}, :layout => false
-                    %td.selected= f[1]
-                  - else
-                    %td= haml :fragment, :locals => {:compound_uri => @compound.uri, :model_uri => @model_uri, :smarts => f[0]}, :layout => false
-                    %td= f[1]
-        -#%td
-
-    %tr
-      %th
-        Neighbors 
-        = haml :prev, :locals => {:compound_uri => @compound.uri, :model_uri => @model_uri, :smarts => @highlight, :page => @page, :size => @neighbors.size}, :layout => false
-        = "(#{5*@page+1}-#{5*@page+5}/#{@neighbors.size})"
-        = haml :next, :locals => {:compound_uri => @compound.uri, :model_uri => @model_uri, :smarts => @highlight, :page => @page, :size => @neighbors.size}, :layout => false
-      %th Activity
-      %th Similarity (activity specific)
-      -#%th
-        Significant fragemnts
-        = haml :fragment, :locals => {:compound_uri => @compound.uri, :model_uri => @model_uri, :smarts => nil}, :layout => false
-      -#%th Additional data
-      -#%th Exclude
-    - first = 5*@page
-    - last = first+4
-    - @neighbors.sort{|a,b| b.last[:similarity] <=> a.last[:similarity]}[first..last].each do |uri,data|
-      - c = OpenTox::Compound.new(:uri => uri)
+    %thead
       %tr
-        %td 
-          -#%br
-            %a{:href => c.display_smarts_uri(data[:features][:activating].collect{|f| f[:smarts]}, data[:features][:deactivating].collect{|f| f[:smarts]}, params[:highlight])} #{c.smiles}
-          %br
-            %img{:src => c.display_smarts_uri(data[:features][:activating].collect{|f| f[:smarts]}, data[:features][:deactivating].collect{|f| f[:smarts]}, params[:highlight]), :alt => c.smiles}
+        %th= @title.gsub(/_lazar_.*$/,' ').capitalize
+        %th= toggle_link("#lazar_algorithm","Prediction")
+        %th= toggle_link("#confidence","Confidence")
+        %th Supporting information
+
+      %tr
+        %td.image= compound_image(@compound,@features)
+        %td= activity_markup(@activity)
+        %td= sprintf('%.03g', @confidence.to_f.abs) if @confidence
         %td
-          - data[:activities].each do |act|
-            - if activity(act) == 'active'
-              .active
-                = activity(act)
-            - elsif activity(act) == 'inactive'
-              .inactive
-                = activity(act)
-            - elsif act.is_a?(Float)
-              .other
-                = sprintf('%.03g', act)
-            - else
-              .other
-                %em= act.to_s
-        %td
-          = sprintf('%.03g', data[:similarity])
-        -#%td
-          %table
-            - unless data[:features][:activating].empty?
-              %tr
-                %th activating
-                %th p value
-              - data[:features][:activating].sort{|a,b| b[:p_value] <=> a[:p_value] }.each do |f|
-                %tr
-                  - if @highlight == f[:smarts]
-                    %td.selected= haml :fragment, :locals => {:compound_uri => @compound.uri, :model_uri => @model_uri, :smarts => f[:smarts]}, :layout => false
-                    %td.selected= f[:p_value]
-                  - else
-                    %td= haml :fragment, :locals => {:compound_uri => @compound.uri, :model_uri => @model_uri, :smarts => f[:smarts]}, :layout => false
-                    %td= f[:p_value]
-            - unless data[:features][:deactivating].empty?
-              %tr
-                %th deactivating
-                %th p value
-              - data[:features][:deactivating].sort{|a,b| b[:p_value] <=> a[:p_value] }.each do |f|
-                %tr
-                  - if @highlight == f[:smarts]
-                    %td.selected= haml :fragment, :locals => {:compound_uri => @compound.uri, :model_uri => @model_uri, :smarts => f[:smarts]}, :layout => false
-                    %td.selected= f[:p_value]
-                  - else
-                    %td= haml :fragment, :locals => {:compound_uri => @compound.uri, :model_uri => @model_uri, :smarts => f[:smarts]}, :layout => false
-                    %td= f[:p_value]
-        -#%td 
-        -#%td 
+          %ul
+            %li
+              %a{:href => "#prediction", :id => "show_names"} Names and synonyms
+              :javascript
+                $("a#show_names").click(function () {
+                  $("#compound_names").load("#{File.join("compound",@compound.inchi)}");  
+                  $("tr#names").toggle();  
+                });
+            %li= toggle_link("#fragments","Significant fragments")
+            -# This does not work, ask nina/vedrin
+            -# %li
+              %a{:href => "http://ambit.uni-plovdiv.bg:8080/ambit2/query/structure/?search=#{@compound.smiles}"} Ambit data
+            -# %li
+              %a{:href => "http://www.ncbi.nlm.nih.gov/sites/entrez?cmd=PureSearch&db=pccompound&term=#{URI.encode('"'+@compound.inchi+'"[InChI]')}"}  PubChem data
+              (external)
+            -# %li
+              %a{:href => "http://chem.sis.nlm.nih.gov/chemidplus/direct.jsp?result=advanced&inchi=#{URI.encode @compound.inchi}"} ToxNet data
+            -#http://chem.sis.nlm.nih.gov/chemidplus/direct.jsp?result=advanced&regno=000143157
 
+      %tr#names{ :style => "display: none;" }
+        %td{:colspan => '4'}
+          %a{:name => 'names'}
+          = hide_link('#names')
+          #compound_names
+      %tr#fragments{ :style => "display: none;" }
+        %td{:colspan => '4'}
+          = hide_link('#fragments')
+          = haml :feature_table, :locals => {:features => @features}, :layout => false
 
-%dl#confidence{ :style => "display: none;" }
-  %dt Confidence:
-  %dd Indicates the applicability domain of a model. Predictions with a high confidence can be expected to be more reliable than predictions with low confidence. Confidence values may take any value between 0 and 1. For most models confidence &gt; 0.025 is a sensible (hard) cutoff to distiguish between reliable and unreliable predictions.
-
-
-%dl#training_data{ :style => "display: none;" }
-  %dt Training data:
-  %dd Experimental result(s) from the training dataset are displayed here. 
-
-
+    %tbody#neighbors
+      = haml :neighbors, :locals => {:neighbors => @neighbors, :page => @page},  :layout => :false

@@ -1,0 +1,5 @@
+%a{:href => "#{destination}", :id => "js_link#{@link_id}"} #{name}
+:javascript
+  $("a#js_link#{@link_id}").click(function () {
+    $("#{destination}").#{method}();  
+  });
