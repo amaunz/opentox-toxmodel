@@ -122,7 +122,6 @@ post '/upload' do # create a new model
 		redirect url_for('/create')
 	end
 
-=begin
   begin
     validation_task_uri = OpenTox::Validation.crossvalidation(
       :algorithm_uri => OpenTox::Algorithm::Lazar.uri,
@@ -135,7 +134,6 @@ post '/upload' do # create a new model
 	rescue
 		flash[:notice] = "Model validation failed."
   end
-=end
 
 =begin
 	if parser.nr_compounds < 10
@@ -252,16 +250,6 @@ end
 get %r{/compound/(.*)} do |inchi|
   OpenTox::Compound.new(:inchi => inchi).names.gsub(/\n/,', ')
 end
-
-=begin
-post "/neighbors" do
-  @neighbors = params[:neighbors]
-  @page = params[:page].to_i
-  LOGGER.debug @neighbors
-  LOGGER.debug @page
-  haml :neighbors
-end
-=end
 
 delete '/?' do
   ToxCreateModel.auto_migrate!
