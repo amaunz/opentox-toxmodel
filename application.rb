@@ -181,7 +181,6 @@ post '/predict/?' do # post chemical name to model
 		#LOGGER.debug "curl -X POST -d 'compound_uri=#{@compound.uri}' -H 'Accept:application/x-yaml' #{model.uri}"
 		prediction = YAML.load(`curl -X POST -d 'compound_uri=#{@compound.uri}' -H 'Accept:application/x-yaml' #{model.uri}`)
     #prediction = YAML.load(OpenTox::Model::Lazar.predict(params[:compound_uri],params[:model_uri]))
-    LOGGER.debug prediction.to_yaml
 		source = prediction.creator
 		if prediction.data[@compound.uri]
 			if source.to_s.match(/model/) # real prediction
