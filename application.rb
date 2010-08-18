@@ -207,7 +207,7 @@ post '/predict/?' do # post chemical name to model
 				@predictions << {:title => model.name, :measured_activities => prediction}
 			end
 		else
-			@predictions << {:title => model.name, :prediction => "not available (no similar compounds in the training dataset)"}
+			@predictions << {:title => model.name, :prediction => "not available (not enough similar compounds in the training dataset)"}
 		end
 	end
 	LOGGER.debug @predictions.inspect
@@ -215,10 +215,9 @@ post '/predict/?' do # post chemical name to model
 	haml :prediction
 end
 
-post "/lazar/?" do
+post "/lazar/?" do # get detailed prediction
   @page = 0
   @page = params[:page].to_i if params[:page]
-  #@highlight = params[:highlight]
   @model_uri = params[:model_uri]
   @prediction = YAML.load(OpenTox::Model::Lazar.predict(params[:compound_uri],params[:model_uri]))
   @compound = OpenTox::Compound.new(:uri => params[:compound_uri])

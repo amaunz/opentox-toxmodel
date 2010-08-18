@@ -25,6 +25,8 @@
                 });
               )
 
+          - elsif p[:prediction].to_s.match(/not available/)
+            = p[:prediction]
           - else
             = activity_markup(p[:prediction])
             - if p[:confidence]
