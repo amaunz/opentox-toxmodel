@@ -20,8 +20,6 @@ helpers do
     case activity.class.to_s
     when /Float/
       haml ".other #{sprintf('%.03g', activity)}", :layout => false
-    when /String/
-      haml ".other #{activity.to_s}", :layout => false
     else
       if activity #true
         haml ".active active", :layout => false
