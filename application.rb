@@ -105,12 +105,8 @@ post '/upload' do # AM: check upload
     redirect url_for('/create')
   end
 
-  @model = ToxCreateModel.new
-  @model.name = params[:endpoint]
   feature_uri = url_for("/feature#"+URI.encode(params[:endpoint]), :full)
-  
   parser = Parser.new params[:file], feature_uri
-
 
   unless parser.format_errors.empty?
     flash[:notice] = "Incorrect file format. Please follow the instructions for #{link_to "Excel", "/excel_format"} or #{link_to "CSV", "/csv_format"} formats."
@@ -122,63 +118,62 @@ post '/upload' do # AM: check upload
   end
 
   # AM: majority split for classification datasets
-  
   balancer = Balancer.new (parser.dataset, feature_uri, url_for('/', :full))
   datasets = []
   if balancer.datasets.size > 0
-    puts balancer.datasets
+    datasets = balancer.datasets
   else
-    create_model (feature_uri, parser)
+    datasets = [parser.dataset_uri]
   end
 
-end
-
-
-
-def create_model (feature_uri, parser)  # create a new model
-
+  @models = [] # now using this as instance
   begin
-    @model.task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => parser.dataset_uri, :prediction_feature => feature_uri)
+    datasets.each do |d|
+      model = ToxCreateModel.new
+      model.name = params[:endpoint]
+      model.task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => d, :prediction_feature => feature_uri)
+      @models << model
+    end
   rescue
     flash[:notice] = "Model creation failed. Please check if the input file is in a valid #{link_to "Excel", "/excel_format"} or #{link_to "CSV", "/csv_format"} format."
     redirect url_for('/create')
   end
 
+  i=0
   begin
-    validation_task_uri = OpenTox::Validation.crossvalidation(
-      :algorithm_uri => OpenTox::Algorithm::Lazar.uri,
-      :dataset_uri => parser.dataset_uri,
-      :prediction_feature => feature_uri,
-      :algorithm_params => "feature_generation_uri=#{OpenTox::Algorithm::Fminer.uri}"
-    ).uri
-    LOGGER.debug "Validation task: " + validation_task_uri
-    @model.validation_task_uri = validation_task_uri
+    @models.each do |model|
+      validation_task_uri = OpenTox::Validation.crossvalidation(
+        :algorithm_uri => OpenTox::Algorithm::Lazar.uri,
+        :dataset_uri => datasets[i],
+        :prediction_feature => feature_uri,
+        :algorithm_params => "feature_generation_uri=#{OpenTox::Algorithm::Fminer.uri}"
+      ).uri
+      LOGGER.debug "Validation task: " + validation_task_uri
+      model.validation_task_uri = validation_task_uri
+      i+=1
+    end
   rescue
     flash[:notice] = "Model validation failed."
   end
 
-=begin
-        if parser.nr_compounds < 10
-                flash[:notice] = "Too few compounds to create a prediction model. Did you provide compounds in SMILES format and classification activities as described in the #{link_to "instructions", "/excel_format"}? As a rule of thumb you will need at least 100 training compounds for nongeneric datasets. A lower number could be sufficient for congeneric datasets."
-                redirect url_for('/create')
-        end
-=end
-
-  @model.nr_compounds = parser.nr_compounds
-  @model.warnings = ''
-
-  @model.warnings += "<p>Incorrect Smiles structures (ignored):</p>" + parser.smiles_errors.join("<br/>") unless parser.smiles_errors.empty?
-  @model.warnings += "<p>Irregular activities (ignored):</p>" + parser.activity_errors.join("<br/>") unless parser.activity_errors.empty?
-  duplicate_warnings = ''
-  parser.duplicates.each {|inchi,lines| duplicate_warnings += "<p>#{lines.join('<br/>')}</p>" if lines.size > 1 }
-  @model.warnings += "<p>Duplicated structures (all structures/activities used for model building, please  make sure, that the results were obtained from <em>independent</em> experiments):</p>" + duplicate_warnings unless duplicate_warnings.empty?
-  @model.save
+  i=0
+  @models.each do |model|
+    model.nr_compounds = OpenTox::Dataset.find(datasets[i]).compounds.size
+    model.warnings = ''
+    model.warnings += "<p>Incorrect Smiles structures (ignored):</p>" + parser.smiles_errors.join("<br/>") unless parser.smiles_errors.empty?
+    model.warnings += "<p>Irregular activities (ignored):</p>" + parser.activity_errors.join("<br/>") unless parser.activity_errors.empty?
+    duplicate_warnings = ''
+    parser.duplicates.each {|inchi,lines| duplicate_warnings += "<p>#{lines.join('<br/>')}</p>" if lines.size > 1 }
+    model.warnings += "<p>Duplicated structures (all structures/activities used for model building, please  make sure, that the results were obtained from <em>independent</em> experiments):</p>" + duplicate_warnings unless duplicate_warnings.empty?
+    model.save
+    i+=1
+  end
 
   flash[:notice] = "Model creation and validation started - this may last up to several hours depending on the number and size of the training compounds."
   redirect url_for('/models')
-
-  # TODO: check for empty model
 end
+
+
 
 post '/predict/?' do # post chemical name to model
   @identifier = params[:identifier]
