@@ -11,8 +11,8 @@ class Parser
     @feature_uri = endpoint_uri
     @dataset.features << endpoint_uri
     @dataset.title = URI.decode(endpoint_uri.split(/#/).last)
-    @format_errors = ""
-    @smiles_errors = []
+      @format_errors = ""
+      @smiles_errors = []
     @activity_errors = []
     @duplicates = {}
     @nr_compounds = 0
@@ -96,27 +96,19 @@ class Parser
       @smiles_errors << "Row #{row}: " + [smiles,act].join(", ") 
       return false
     end
-    unless numeric?(act) or classification?(act)
+    unless numeric?(act) or OpenTox::Utils.classification?(act)
       @activity_errors << "Row #{row}: " + [smiles,act].join(", ")
       return false
     end
     @duplicates[compound.inchi] = [] unless @duplicates[compound.inchi]
     @duplicates[compound.inchi] << "Row #{row}: " + [smiles, act].join(", ")
-    @type = "regression" unless classification?(act)
+    @type = "regression" unless OpenTox::Utils.classification?(act)
     @nr_compounds += 1
     [ compound.uri, act , row ]
   end
 
   def numeric?(object)
     true if Float(object) rescue false
-  end
-
-  def classification?(object)
-    !object.to_s.strip.match(TRUE_REGEXP).nil? or !object.to_s.strip.match(FALSE_REGEXP).nil?
-  end
-
-  def is_true?(object)
-    self.classification?(object) and !object.to_s.strip.match(TRUE_REGEXP).nil?
   end
 
 end

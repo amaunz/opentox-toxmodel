@@ -24,7 +24,7 @@ class Balancer
 
   attr_accessor :inact_act_ratio, :act_hash, :inact_hash, :majority_splits, :nr_majority_splits
 
-  def initialize(parser)
+  def initialize(dataset)
     @act_hash = {}
     @inact_hash = {}
     @act_cnt = 0
@@ -33,12 +33,12 @@ class Balancer
     @majority_splits = []
     @nr_majority_splits = 1 # +/-1 means: no split
 
-    if parser.type == "classification" 
-      parser.data.each do |d|
+    if dataset.type == "classification" 
+      dataset.data.each do |d|
         smi = OpenTox::RestClientWrapper.get(d[0],:accept => "chemical/x-daylight-smiles")
         act = d[1]
         id  = d[2]
-        if parser.is_true?(act)
+        if OpenTox::Utils.is_true?(act)
           @act_cnt += 1
           @act_hash[id]=smi
         else 

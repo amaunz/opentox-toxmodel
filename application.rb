@@ -126,7 +126,6 @@ post '/upload' do # AM: check upload
     maj_split = balancer.majority_split
   end
 
-
   if (balancer.nr_majority_splits.abs > 1)
     i=0
     tf = []
@@ -142,7 +141,6 @@ post '/upload' do # AM: check upload
   else
     create_model (feature_uri, parser)
   end
-
 
 end
 
