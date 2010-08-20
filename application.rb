@@ -108,6 +108,7 @@ post '/upload' do # AM: check upload
   @model = ToxCreateModel.new
   @model.name = params[:endpoint]
   feature_uri = url_for("/feature#"+URI.encode(params[:endpoint]), :full)
+  
   parser = Parser.new params[:file], feature_uri
 
 
@@ -120,24 +121,12 @@ post '/upload' do # AM: check upload
     redirect url_for('/create')
   end
 
-  maj_split = []
-  if parser.type == "classification" 
-    balancer = Balancer.new (parser)
-    maj_split = balancer.majority_split
-  end
-
-  if (balancer.nr_majority_splits.abs > 1)
-    i=0
-    tf = []
-    maj_split.each do |s| 
-      i+=1
-      tf[i] = Tempfile.open("#{@model.name}-#{i}-#{balancer.nr_majority_splits.abs}") 
-      tf[i].puts balancer.hsh2csv(s).chomp
-      puts balancer.hsh2csv(s)
-      # TODO: recursive call of /upload
-      tf[i].close
-    end
-    redirect url_for('/create')
+  # AM: majority split for classification datasets
+  
+  balancer = Balancer.new (parser.dataset, feature_uri, url_for('/', :full))
+  datasets = []
+  if balancer.datasets.size > 0
+    puts balancer.datasets
   else
     create_model (feature_uri, parser)
   end
