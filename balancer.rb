@@ -22,12 +22,9 @@ class Balancer
     if dataset.features.include?(feature_uri)
       dataset.data.each do |i,a|
         inchi = i
-        puts
-        puts i
         acts = a
         acts.each do |act|
           value = act[feature_uri]
-          puts "v: #{value}"
           if OpenTox::Utils.is_true?(value)
             @act_arr << inchi
           elsif OpenTox::Utils.classification?(value)
@@ -39,12 +36,9 @@ class Balancer
         end
       end
       @inact_act_ratio = @inact_arr.size.to_f / @act_arr.size.to_f unless (@act_arr.size == 0 or !classification) # leave alone for regression
-      puts 
-      puts @inact_act_ratio
-      puts
       set_nr_majority_splits
       # perform majority split
-      @split = @nr_majority_splits > 0 ? shuffle_split(@inact_arr) : shuffle_split(@act_arr) unless @nr_majority_splits == 1
+      @split = @nr_majority_splits > 0 ? shuffle_split(@inact_arr) : shuffle_split(@act_arr) unless @nr_majority_splits.abs == 1
       @split.each do |s|
         new_c = @nr_majority_splits > 0 ? s.concat(@act_arr) : s.concat(@inac_arr)
         @datasets << dataset.create_new_dataset(new_c, [feature_uri], dataset.title, creator_url)
