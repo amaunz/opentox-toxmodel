@@ -117,37 +117,34 @@ post '/upload' do # AM: check upload
     redirect url_for('/create')
   end
 
-  # AM: majority split for classification datasets
+
   balancer = Balancer.new (parser.dataset, feature_uri, url_for('/', :full))
   @balanced_datasets = []
+  @balanced_models = [] 
+
+  # AM: majority split for classification datasets
   if balancer.datasets.size > 0
     @balanced_datasets = balancer.datasets
   end
   @main_dataset = parser.dataset_uri
 
 
-  # AM: create balanced models
-  @balanced_models = [] 
+  # AM: launch balanced models
+  bm_task_uris = []
   @balanced_datasets.each do |d|
-    @create_bm_task_uri = OpenTox::Task.as_task do |task|
-      bm_task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => d, :prediction_feature => feature_uri)
-      bm_task=OpenTox::Task.find(bm_task_uri)
-      bm_task.wait_for_completion
-      @balanced_models << bm_task.resultURI
-    end
+    bm_task_uris << OpenTox::Algorithm::Lazar.create_model(:dataset_uri => d, :prediction_feature => feature_uri)
   end
-
+  bm_task_uris.each do |t|
+    bm_task=OpenTox::Task.find(t)
+    bm_task.wait_for_completion
+    @balanced_models << bm_task.resultURI
+  end
 
   # AM: create main model
   begin
     @main_model = ToxCreateModel.new
     @main_model.name = params[:endpoint]
-    if @balanced_models.size == 0
-      @main_model.task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => @main_dataset, :prediction_feature => feature_uri)
-      #task = OpenTox::Task.find(model.task_uri)
-      #task.wait_for_completion
-      #main_model.model_uri = task.resultURI
-    end
+    @main_model.task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => @main_dataset, :prediction_feature => feature_uri, :models => @balanced_models)
   rescue
     flash[:notice] = "Model creation failed. Please check if the input file is in a valid #{link_to "Excel", "/excel_format"} or #{link_to "CSV", "/csv_format"} format."
   #  redirect url_for('/create')
@@ -155,11 +152,11 @@ post '/upload' do # AM: check upload
 
 
   # AM: crossvalidation for balanced models
-  bm_validation_task_uris = []
-  [@balanced_models].each_with_index do |m,i|
+  bm_validation_task_uris = [] # not actually used
+  @balanced_datasets.each do |m|
     validation_task_uri = OpenTox::Validation.crossvalidation(
       :algorithm_uri => OpenTox::Algorithm::Lazar.uri,
-      :dataset_uri => @balanced_datasets[i],
+      :dataset_uri => m,
       :prediction_feature => feature_uri,
       :algorithm_params => "feature_generation_uri=#{OpenTox::Algorithm::Fminer.uri}"
     ).uri
@@ -185,6 +182,8 @@ post '/upload' do # AM: check upload
   @main_model.warnings += "<p>Duplicated structures (all structures/activities used for model building, please  make sure, that the results were obtained from <em>independent</em> experiments):</p>" + duplicate_warnings unless duplicate_warnings.empty?
   @main_model.save
 
+
+  # AM: redirect
   flash[:notice] = "Model creation and validation started - this may last up to several hours depending on the number and size of the training compounds."
   redirect url_for('/models')
 end
@@ -212,7 +211,7 @@ post '/predict/?' do # post chemical name to model
     title = nil
     db_activities = []
     #LOGGER.debug "curl -X POST -d 'compound_uri=#{@compound.uri}' -H 'Accept:application/x-yaml' #{model.uri}"
-    prediction = YAML.load(`curl -X POST -d 'compound_uri=#{@compound.uri}' -H 'Accept:application/x-yaml' #{model.uri}`)
+    prediction = YAML.load(`curl -X POST -d 'compound_uri=#{@compound.uri}' -H 'Accept:application/x-yaml' #{model.uri} 2>/dev/null`)
     #prediction = YAML.load(OpenTox::Model::Lazar.predict(params[:compound_uri],params[:model_uri]))
     source = prediction.creator
     if prediction.data[@compound.uri]
