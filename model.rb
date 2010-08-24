@@ -14,6 +14,7 @@ class ToxCreateModel
   property :type, String
   property :created_at, DateTime
 
+
   def status
     #begin
     RestClient.get(File.join(@task_uri, 'hasStatus')).body

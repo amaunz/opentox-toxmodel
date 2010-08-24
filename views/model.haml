@@ -60,6 +60,6 @@
         - case model.type
         - when "classification"
           = haml :classification_validation, :locals=>{:model=>model}, :layout => false     
-        -when "regression"
+        - when "regression"
           = haml :regression_validation, :locals=>{:model=>model}, :layout => false     
-          
+      %dt Balanced Submodels:

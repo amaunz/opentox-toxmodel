@@ -118,69 +118,69 @@ post '/upload' do # AM: check upload
   end
 
 
-  balancer = Balancer.new (parser.dataset, feature_uri, url_for('/', :full))
-  @balanced_datasets = []
-  @balanced_models = [] 
+  @model = ToxCreateModel.new
+  @model.name = params[:endpoint]
+
 
   # AM: majority split for classification datasets
+  balancer = Balancer.new (parser.dataset, feature_uri, url_for('/', :full))
+  @balanced_datasets = []
   if balancer.datasets.size > 0
     @balanced_datasets = balancer.datasets
   end
   @main_dataset = parser.dataset_uri
 
 
-  # AM: launch balanced models
-  bm_task_uris = []
-  @balanced_datasets.each do |d|
-    bm_task_uris << OpenTox::Algorithm::Lazar.create_model(:dataset_uri => d, :prediction_feature => feature_uri)
-  end
-  bm_task_uris.each do |t|
-    bm_task=OpenTox::Task.find(t)
-    bm_task.wait_for_completion
-    @balanced_models << bm_task.resultURI
-  end
+  # AM: case 1, create (several) balanced models
+  if @balanced_datasets.size > 0
+    bm_task_uris = []
+    begin
+      @balanced_datasets.each do |bd|
+        bm_task_uris << OpenTox::Algorithm::Lazar.create_model(:dataset_uri => bd, :prediction_feature => feature_uri)
+      end
+    rescue
+      flash[:notice] = "Model creation failed. Please check if the input file is in a valid #{link_to "Excel", "/excel_format"} or #{link_to "CSV", "/csv_format"} format."
+    end
+    bm_validation_task_uris = []
+    @balanced_datasets.each do |m|
+      validation_task_uri = OpenTox::Validation.crossvalidation(
+        :algorithm_uri => OpenTox::Algorithm::Lazar.uri,
+        :dataset_uri => m,
+        :prediction_feature => feature_uri,
+        :algorithm_params => "feature_generation_uri=#{OpenTox::Algorithm::Fminer.uri}"
+      ).uri
+      bm_validation_task_uris << validation_task_uri
+    end
 
-  # AM: create main model
-  begin
-    @main_model = ToxCreateModel.new
-    @main_model.name = params[:endpoint]
-    @main_model.task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => @main_dataset, :prediction_feature => feature_uri, :models => @balanced_models)
-  rescue
-    flash[:notice] = "Model creation failed. Please check if the input file is in a valid #{link_to "Excel", "/excel_format"} or #{link_to "CSV", "/csv_format"} format."
-  #  redirect url_for('/create')
-  end
 
+  # AM: case 2, create unbalanced model (compatibility)
+  else 
 
-  # AM: crossvalidation for balanced models
-  bm_validation_task_uris = [] # not actually used
-  @balanced_datasets.each do |m|
+    begin
+      @model.task_uri = OpenTox::Algorithm::Lazar.create_model(:dataset_uri => @main_dataset, :prediction_feature => feature_uri)
+    rescue
+      flash[:notice] = "Model creation failed. Please check if the input file is in a valid #{link_to "Excel", "/excel_format"} or #{link_to "CSV", "/csv_format"} format."
+    end
     validation_task_uri = OpenTox::Validation.crossvalidation(
       :algorithm_uri => OpenTox::Algorithm::Lazar.uri,
-      :dataset_uri => m,
+      :dataset_uri =>  @main_dataset,
       :prediction_feature => feature_uri,
       :algorithm_params => "feature_generation_uri=#{OpenTox::Algorithm::Fminer.uri}"
     ).uri
-    bm_validation_task_uris << validation_task_uri
+    @model.validation_task_uri = validation_task_uri
+
   end
+  # AM: case finished
 
-
-  # AM: original crossvalidation
-  validation_task_uri = OpenTox::Validation.crossvalidation(
-    :algorithm_uri => OpenTox::Algorithm::Lazar.uri,
-    :dataset_uri =>  @main_dataset,
-    :prediction_feature => feature_uri,
-    :algorithm_params => "feature_generation_uri=#{OpenTox::Algorithm::Fminer.uri}"
-  ).uri
-  @main_model.validation_task_uri = validation_task_uri
-  @main_model.nr_compounds = OpenTox::Dataset.find(@main_dataset).compounds.size
-  @main_model.save
-  @main_model.warnings = ''
-  @main_model.warnings += "<p>Incorrect Smiles structures (ignored):</p>" + parser.smiles_errors.join("<br/>") unless parser.smiles_errors.empty?
-  @main_model.warnings += "<p>Irregular activities (ignored):</p>" + parser.activity_errors.join("<br/>") unless parser.activity_errors.empty?
+  @model.nr_compounds = OpenTox::Dataset.find(@main_dataset).compounds.size
+  @model.save
+  @model.warnings = ''
+  @model.warnings += "<p>Incorrect Smiles structures (ignored):</p>" + parser.smiles_errors.join("<br/>") unless parser.smiles_errors.empty?
+  @model.warnings += "<p>Irregular activities (ignored):</p>" + parser.activity_errors.join("<br/>") unless parser.activity_errors.empty?
   duplicate_warnings = ''
   parser.duplicates.each {|inchi,lines| duplicate_warnings += "<p>#{lines.join('<br/>')}</p>" if lines.size > 1 }
-  @main_model.warnings += "<p>Duplicated structures (all structures/activities used for model building, please  make sure, that the results were obtained from <em>independent</em> experiments):</p>" + duplicate_warnings unless duplicate_warnings.empty?
-  @main_model.save
+  @model.warnings += "<p>Duplicated structures (all structures/activities used for model building, please  make sure, that the results were obtained from <em>independent</em> experiments):</p>" + duplicate_warnings unless duplicate_warnings.empty?
+  @model.save
 
 
   # AM: redirect
